@@ -11,10 +11,15 @@
 </p>
 
 <p align="center">
+  <a href="https://unbury.migsilva.dev"><strong>unbury.migsilva.dev</strong></a>
+</p>
+
+<p align="center">
   <a href="../../releases/latest">
     <img src="https://img.shields.io/github/v/release/migsilva89/unbury?style=flat-square" alt="Latest release">
   </a>
   <img src="https://img.shields.io/badge/macOS-14%2B-blue?style=flat-square" alt="macOS 14 or later">
+  <img src="https://img.shields.io/badge/Apple%20Silicon-only-black?style=flat-square" alt="Apple Silicon only">
   <img src="https://img.shields.io/badge/Swift-6-orange?style=flat-square" alt="Swift 6">
   <img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square" alt="MIT license">
 </p>
@@ -46,7 +51,12 @@
 
 ## Installation
 
-1. Download the DMG from [**Releases**](../../releases/latest).
+**Requires macOS 14 or later on Apple Silicon.** The published build is arm64 only, and
+the update feed says so, so an Intel Mac is never offered it. Building from source on an
+Intel Mac has not been tried.
+
+1. Download the DMG from [**Releases**](../../releases/latest), or from
+   [unbury.migsilva.dev](https://unbury.migsilva.dev).
 2. Open it and drag **Unbury** to **Applications**.
 3. Open it, and in **Settings** paste your API key.
 4. Press **Import from browser** and pick a profile.

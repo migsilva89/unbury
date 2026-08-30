@@ -7,7 +7,7 @@ import Foundation
 /// then comes from the title and the domain, which is usually enough to find it
 /// again later.
 public enum PageReader {
-    static let agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) BookmarksVault/1.0"
+    static let agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Unbury/1.0 (+https://unbury.migsilva.dev)"
 
     public struct Page: Sendable {
         public let text: String
