@@ -1,0 +1,57 @@
+# Every pull request has to build before anyone reads it. Without this, each
+# contribution costs a manual verification, and that cost is what makes
+# maintainers stop merging.
+#
+# It builds and tests only — it never signs or notarises. Those need a Developer
+# ID certificate, which is not in this repository and never will be; releases are
+# cut from a machine that holds one. See docs/RELEASING.md.
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show the toolchain
+        run: swift --version
+
+      - name: Cache the build directory
+        uses: actions/cache@v4
+        with:
+          path: app/.build
+          key: swiftpm-${{ runner.os }}-${{ hashFiles('app/Package.resolved') }}
+          restore-keys: swiftpm-${{ runner.os }}-
+
+      - name: Build the app
+        working-directory: app
+        run: swift build --product Unbury
+
+      - name: Build the command line
+        working-directory: app
+        run: swift build --product unburyctl
+
+      # `swift test` fails a package with no test target, which would report a
+      # red build for a green tree. Run them only once there are some.
+      - name: Run the tests, if there are any
+        working-directory: app
+        run: |
+          if grep -q '\.testTarget' Package.swift; then
+            swift test
+          else
+            echo "No test target yet — skipping."
+          fi

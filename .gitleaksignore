@@ -1,0 +1,10 @@
+# What gitleaks is told to stop flagging, and why. Nothing goes in here without a
+# sentence saying why it is safe — an unexplained line in this file is how a real
+# key gets waved through six months from now.
+
+# The Sparkle EdDSA key in app/build.sh is the PUBLIC half. It is compiled into
+# every published build so an installed copy can check that an update was signed
+# by the owner; the private half lives in the login keychain and is never in a
+# file. See docs/RELEASING.md.
+4172e25a994395bb8c40837276b7f5f70b38805a:app/build.sh:generic-api-key:16
+app/build.sh:generic-api-key:16

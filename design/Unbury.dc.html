@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; padding:0; background:#100F0F; }
+  * { box-sizing:border-box; }
+  a { color:#66A0C8; text-decoration:none; }
+  a:hover { color:#92BFDB; }
+  input { font-family:inherit; }
+  input:focus { outline:none; }
+  button { font-family:inherit; border:none; background:none; cursor:pointer; color:inherit; }
+  ::selection { background:#282726; color:#CECDC3; }
+  ::-webkit-scrollbar { width:10px; height:10px; }
+  ::-webkit-scrollbar-thumb { background:#282726; border:3px solid #100F0F; border-radius:8px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  @keyframes drawerIn { from { transform:translateX(14px); opacity:0 } to { transform:translateX(0); opacity:1 } }
+  @keyframes fadeUp { from { transform:translateY(3px); opacity:0 } to { transform:translateY(0); opacity:1 } }
+</style>
+</helmet>
+<div style="height:100vh;display:flex;flex-direction:column;background:#100F0F;color:#CECDC3;font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:13.5px;overflow:hidden;-webkit-font-smoothing:antialiased">
+
+  <div style="height:38px;flex:0 0 38px;display:flex;align-items:center;gap:14px;padding:0 14px;border-bottom:1px solid #282726;background:#1C1B1A">
+    <div style="font-size:10.5px;letter-spacing:0.22em;color:#878580;font-weight:600">VAULT</div>
+    <div style="width:1px;height:14px;background:#282726"></div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6F6E69;font-variant-numeric:tabular-nums">{{ vaultMeta }}</div>
+    <div style="flex:1"></div>
+    <div style="display:flex;gap:2px;padding:2px;border-radius:6px;background:#1C1B1A">
+      <button onClick="{{ goSearch }}" style="padding:4px 11px;border-radius:4px;font-size:12px;color: {{ tabSearchFg }};background: {{ tabSearchBg }}">Search</button>
+      <button onClick="{{ goAsk }}" style="padding:4px 11px;border-radius:4px;font-size:12px;color: {{ tabAskFg }};background: {{ tabAskBg }}">Ask</button>
+      <button onClick="{{ goLandscape }}" style="padding:4px 11px;border-radius:4px;font-size:12px;color: {{ tabLandFg }};background: {{ tabLandBg }}">Landscape</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#575653">
+      <span style="padding:2px 5px;border:1px solid #282726;border-radius:3px">/</span><span>search</span>
+      <span style="padding:2px 5px;border:1px solid #282726;border-radius:3px">↑↓</span><span>move</span>
+      <span style="padding:2px 5px;border:1px solid #282726;border-radius:3px">↵</span><span>open</span>
+      <span style="padding:2px 5px;border:1px solid #282726;border-radius:3px">esc</span><span>back</span>
+    </div>
+  </div>
+
+  <sc-if value="{{ isSearch }}" hint-placeholder-val="{{ true }}">
+  <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+
+    <div style="padding:16px 18px 0 18px;border-bottom:1px solid #282726;background:#1C1B1A">
+      <div style="display:flex;align-items:baseline;gap:12px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;color:#403E3C">›</div>
+        <input ref="{{ inputRef }}" value="{{ query }}" onChange="{{ onQuery }}" placeholder="Describe what you half-remember…" spellCheck="false" style="flex:1;background:transparent;border:none;color:#CECDC3;font-size:19px;font-weight:300;padding:0 0 2px 0;letter-spacing:-0.01em" />
+        <sc-if value="{{ hasQuery }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ clearQuery }}" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#575653;border:1px solid #282726;border-radius:4px;padding:3px 7px">clear · esc</button>
+        </sc-if>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0 11px 27px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6F6E69;font-variant-numeric:tabular-nums">
+        <span style="color: {{ statusColor }}">{{ statusText }}</span>
+        <sc-if value="{{ hasTimeFilter }}" hint-placeholder-val="{{ false }}">
+          <span style="color:#878580;border:1px solid #343331;border-radius:3px;padding:1px 6px">time · {{ timeLabel }}</span>
+        </sc-if>
+      </div>
+      <sc-if value="{{ showChips }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:0 0 11px 27px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#403E3C;letter-spacing:0.06em">NARROW</span>
+          <sc-for list="{{ chips }}" as="c" hint-placeholder-count="6">
+            <button onClick="{{ c.toggle }}" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:3px 8px;border-radius:11px;border:1px solid {{ c.border }};background: {{ c.bg }};color: {{ c.fg }};font-variant-numeric:tabular-nums">{{ c.label }} <span style="opacity:0.55">{{ c.count }}</span></button>
+          </sc-for>
+          <sc-if value="{{ hasActiveChips }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ clearChips }}" style="font-size:10.5px;color:#6F6E69;font-family:'IBM Plex Mono',monospace">reset</button>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="flex:1;min-height:0;display:flex">
+      <div style="flex:1;min-width:0;overflow-y:auto">
+
+        <sc-if value="{{ dupBanner }}" hint-placeholder-val="{{ false }}">
+          <div style="margin:14px 18px 4px 18px;padding:11px 13px;border:1px solid #343331;border-left:2px solid {{ accent }};border-radius:5px;background:#1C1B1A;animation:fadeUp 160ms ease-out">
+            <div style="font-size:13px;color:#CECDC3">{{ dupTitle }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#878580;padding-top:3px">{{ dupSub }}</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ noGood }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:560px;margin:0;padding:46px 18px 18px 46px;animation:fadeUp 160ms ease-out">
+            <div style="font-size:15px;color:#CECDC3;letter-spacing:-0.01em">Nothing in the vault matches that well.</div>
+            <div style="font-size:13px;color:#878580;padding-top:7px;line-height:1.55;text-wrap:pretty">{{ noGoodBody }}</div>
+            <div style="display:flex;gap:8px;padding-top:14px">
+              <button onClick="{{ showWeak }}" style="font-size:12px;color:#878580;border:1px solid #343331;border-radius:4px;padding:5px 10px;background:#1C1B1A">{{ weakBtnLabel }}</button>
+              <sc-if value="{{ hasTimeFilter }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ dropTime }}" style="font-size:12px;color:#878580;border:1px solid #282726;border-radius:4px;padding:5px 10px">Search all time</button>
+              </sc-if>
+              <button onClick="{{ clearQuery }}" style="font-size:12px;color:#6F6E69;padding:5px 6px">Start over</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isEmptyVault }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:520px;padding:56px 18px 18px 46px">
+            <div style="font-size:15px;color:#CECDC3">The vault is empty.</div>
+            <div style="font-size:13px;color:#878580;padding-top:7px;line-height:1.55">Nothing has been indexed yet. Save a link in the browser, or hand one to the agent, and it will appear here within a minute — described, tagged and searchable by meaning.</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:0 0 40px 0">
+          <div style="display:flex;align-items:center;gap:8px;padding:12px 18px 8px 18px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;color:#403E3C">{{ listLabel }}</div>
+          <sc-for list="{{ rows }}" as="r" hint-placeholder-count="9">
+            <div onClick="{{ r.select }}" style="display:grid;grid-template-columns:44px minmax(0,1fr) 116px;gap:13px;align-items:start;padding:{{ r.pad }} 18px {{ r.pad }} 16px;border-left:2px solid {{ r.edge }};background: {{ r.bg }};cursor:default" style-hover="background:#232221">
+              <sc-if value="{{ r.hasImg }}" hint-placeholder-val="{{ true }}">
+                <div style="width:44px;height:44px;border-radius:5px;background: {{ r.thumbBg }};border:1px solid #343331;position:relative;overflow:hidden">
+                  <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(0,0,0,0.35))"></div>
+                  <div style="position:absolute;left:0;bottom:0;right:0;height:11px;background:rgba(0,0,0,0.4)"></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ r.noImg }}" hint-placeholder-val="{{ false }}">
+                <div style="width:44px;height:44px;border-radius:5px;background:#1C1B1A;border:1px solid #343331;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#403E3C">{{ r.initial }}</div>
+              </sc-if>
+
+              <div style="min-width:0">
+                <div style="display:flex;align-items:baseline;gap:8px;min-width:0">
+                  <div style="font-size:13.5px;font-weight:500;color: {{ r.titleFg }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.005em">{{ r.title }}</div>
+                  <sc-if value="{{ r.untitled }}" hint-placeholder-val="{{ false }}">
+                    <div style="flex:0 0 auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#575653;border:1px solid #282726;border-radius:3px;padding:1px 4px">no title · from description</div>
+                  </sc-if>
+                </div>
+                <div style="font-size:12.5px;color:#878580;padding-top:3px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.desc }}</div>
+                <div style="display:flex;align-items:center;gap:8px;padding-top:5px;flex-wrap:nowrap;overflow:hidden">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6F6E69;flex:0 0 auto">{{ r.site }}</span>
+                  <span style="width:3px;height:3px;border-radius:2px;background:#403E3C;flex:0 0 auto"></span>
+                  <sc-for list="{{ r.tags }}" as="t" hint-placeholder-count="4">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color: {{ t.fg }};flex:0 0 auto">{{ t.label }}</span>
+                  </sc-for>
+                </div>
+              </div>
+
+              <div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums">
+                <div style="font-size:11px;color:#6F6E69">{{ r.dateText }}</div>
+                <div style="font-size:12px;color: {{ r.scoreFg }};padding-top:4px">{{ r.scoreText }}</div>
+                <div style="display:flex;gap:2px;justify-content:flex-end;padding-top:5px">
+                  <sc-for list="{{ r.bars }}" as="b" hint-placeholder-count="5">
+                    <div style="width:6px;height:3px;border-radius:1px;background: {{ b.c }}"></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ tailNote }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:14px 18px 0 18px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#575653">{{ tailNote }}</div>
+          </sc-if>
+        </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ detail }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:0 0 396px;width:396px;border-left:1px solid #282726;background:#1C1B1A;overflow-y:auto;animation:drawerIn 160ms cubic-bezier(0.2,0.7,0.2,1)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #282726;position:sticky;top:0;background:#1C1B1A">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#575653">RECORD {{ detail.ordinal }}</div>
+            <button onClick="{{ closeDetail }}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6F6E69;border:1px solid #282726;border-radius:3px;padding:2px 6px">esc</button>
+          </div>
+
+          <div style="padding:16px 16px 18px 16px;border-bottom:1px solid #282726">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <sc-if value="{{ detail.hasImg }}" hint-placeholder-val="{{ true }}">
+                <div style="flex:0 0 88px;height:60px;border-radius:5px;background: {{ detail.thumbBg }};border:1px solid #343331"></div>
+              </sc-if>
+              <sc-if value="{{ detail.noImg }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:0 0 88px;height:60px;border-radius:5px;background:#1C1B1A;border:1px solid #343331;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;color:#403E3C">{{ detail.initial }}</div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#403E3C">no preview</div>
+                </div>
+              </sc-if>
+              <div style="min-width:0">
+                <div style="font-size:14px;font-weight:500;color:#CECDC3;line-height:1.35;text-wrap:pretty">{{ detail.title }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6F6E69;padding-top:5px;word-break:break-all">{{ detail.url }}</div>
+              </div>
+            </div>
+            <div style="font-size:13px;color:#878580;line-height:1.55;padding-top:12px;text-wrap:pretty">{{ detail.desc }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;padding-top:12px">
+              <sc-for list="{{ detail.tagList }}" as="t" hint-placeholder-count="4">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#878580;border:1px solid #282726;border-radius:10px;padding:2px 8px">{{ t.label }}</span>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:7px;padding-top:15px">
+              <button style="font-size:12px;color:#CECDC3;background:#282726;border:1px solid #343331;border-radius:4px;padding:5px 10px" style-hover="background:#343331">Open link <span style="font-family:'IBM Plex Mono',monospace;color:#575653">↵</span></button>
+              <button onClick="{{ detail.findSimilar }}" style="font-size:12px;color:#878580;border:1px solid #282726;border-radius:4px;padding:5px 10px" style-hover="color:#CECDC3">Find similar</button>
+            </div>
+          </div>
+
+          <div style="padding:14px 16px;border-bottom:1px solid #282726">
+            <sc-for list="{{ detail.meta }}" as="m" hint-placeholder-count="7">
+              <div style="display:grid;grid-template-columns:96px 1fr;gap:10px;padding:3.5px 0">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#575653;letter-spacing:0.04em">{{ m.k }}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color: {{ m.fg }};font-variant-numeric:tabular-nums;word-break:break-all">{{ m.v }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="padding:14px 16px 26px 16px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#403E3C">EMBEDDING</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#575653">{{ detail.vecMeta }}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px 8px;padding-top:9px">
+              <sc-for list="{{ detail.vector }}" as="v" hint-placeholder-count="32">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color: {{ v.fg }};font-variant-numeric:tabular-nums;text-align:right">{{ v.n }}</div>
+              </sc-for>
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#403E3C;padding-top:8px">first 32 of 1024 · remaining hidden</div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isLandscape }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;min-height:0;overflow-y:auto">
+    <div style="max-width:1060px;padding:30px 40px 70px 40px">
+      <div style="font-size:20px;font-weight:300;color:#CECDC3;letter-spacing:-0.015em">Four years of saving things.</div>
+      <div style="font-size:13px;color:#878580;padding-top:6px;max-width:560px;line-height:1.55;text-wrap:pretty">Everything the vault holds, and how little of it you have gone back to. Nothing here is a control — it is a look at the shape of the collection.</div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#282726;border:1px solid #282726;border-radius:6px;margin-top:22px;overflow:hidden">
+        <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+          <div style="background:#1C1B1A;padding:15px 16px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:25px;color:#CECDC3;font-variant-numeric:tabular-nums;letter-spacing:-0.02em">{{ s.n }}</div>
+            <div style="font-size:11.5px;color:#6F6E69;padding-top:4px">{{ s.label }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#575653;padding-top:2px">{{ s.sub }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding-top:34px">
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <div style="font-size:13.5px;color:#CECDC3;font-weight:500">When you saved it</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6F6E69">monthly · 2022 – 2026</div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:2px;height:120px;padding-top:16px;border-bottom:1px solid #343331">
+          <sc-for list="{{ months }}" as="m" hint-placeholder-count="56">
+            <div title="{{ m.tip }}" style="flex:1;height: {{ m.h }}px;background: {{ m.c }};border-radius:1px 1px 0 0;min-height:1px"></div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:2px;padding-top:6px">
+          <sc-for list="{{ yearAxis }}" as="y" hint-placeholder-count="5">
+            <div style="flex: {{ y.flex }};font-family:'IBM Plex Mono',monospace;font-size:10.5px;color: {{ y.fg }};font-variant-numeric:tabular-nums">{{ y.label }} <span style="color:#403E3C">{{ y.count }}</span></div>
+          </sc-for>
+        </div>
+        <div style="font-size:12.5px;color:#6F6E69;padding-top:12px;max-width:600px;line-height:1.5">{{ monthsNote }}</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:38px;padding-top:38px">
+        <div>
+          <div style="font-size:13.5px;color:#CECDC3;font-weight:500">Where it came from</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6F6E69;padding-top:3px">367 distinct sites</div>
+          <div style="padding-top:14px">
+            <sc-for list="{{ sites }}" as="s" hint-placeholder-count="12">
+              <div style="display:grid;grid-template-columns:150px 1fr 34px;gap:10px;align-items:center;padding:3px 0">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#878580;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.name }}</div>
+                <div style="height:7px;background:#1C1B1A;border-radius:2px;overflow:hidden">
+                  <div style="height:7px;width: {{ s.pct }}%;background: {{ s.c }};border-radius:2px"></div>
+                </div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6F6E69;text-align:right;font-variant-numeric:tabular-nums">{{ s.n }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size:12.5px;color:#6F6E69;padding-top:12px;line-height:1.5;text-wrap:pretty">{{ sitesNote }}</div>
+        </div>
+
+        <div>
+          <div style="font-size:13.5px;color:#CECDC3;font-weight:500">What you collect</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6F6E69;padding-top:3px">774 tags · 4.9 per link</div>
+          <div style="padding-top:14px">
+            <sc-for list="{{ tagBars }}" as="t" hint-placeholder-count="10">
+              <div style="display:grid;grid-template-columns:110px 1fr 34px;gap:10px;align-items:center;padding:3px 0">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#878580">{{ t.name }}</div>
+                <div style="height:7px;background:#1C1B1A;border-radius:2px;overflow:hidden">
+                  <div style="height:7px;width: {{ t.pct }}%;background: {{ t.c }};border-radius:2px"></div>
+                </div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6F6E69;text-align:right;font-variant-numeric:tabular-nums">{{ t.n }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size:12.5px;color:#6F6E69;padding-top:12px;line-height:1.5;text-wrap:pretty">{{ tagsNote }}</div>
+        </div>
+      </div>
+
+      <div style="padding-top:38px">
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <div style="font-size:13.5px;color:#CECDC3;font-weight:500">Saved once, never opened again</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6F6E69">411 links · 66% of the vault</div>
+        </div>
+        <div style="border:1px solid #282726;border-radius:6px;margin-top:13px;overflow:hidden">
+          <sc-for list="{{ forgotten }}" as="f" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 110px 90px;gap:12px;align-items:center;padding:9px 13px;border-top:1px solid {{ f.line }};background:#1C1B1A">
+              <div style="font-size:12.5px;color:#878580;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.title }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6F6E69;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.site }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#575653;text-align:right;font-variant-numeric:tabular-nums">{{ f.ago }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size:12.5px;color:#6F6E69;padding-top:12px;max-width:620px;line-height:1.5;text-wrap:pretty">These are the reason the vault exists: you did not forget them on purpose, you forgot what they were called. Searching by meaning is the only way back to them.</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isAsk }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;min-height:0;display:flex">
+
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:#100F0F">
+      <div style="flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid #282726;background:#1C1B1A">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#575653;white-space:nowrap;flex:0 0 auto">READ-ONLY</div>
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:1px;border:1px solid #282726;border-radius:5px;overflow:hidden;flex:0 0 auto">
+          <sc-for list="{{ engines }}" as="e" hint-placeholder-count="3">
+            <button onClick="{{ e.pick }}" title="{{ e.title }}" style="padding:3px 9px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;white-space:nowrap;color: {{ e.fg }};background: {{ e.bg }}">{{ e.label }}</button>
+          </sc-for>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6F6E69;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0">{{ engineMeter }}</div>
+      </div>
+
+      <div id="ask-transcript" style="flex:1;min-height:0;overflow-y:auto;padding:0 0 10px 0">
+        <sc-if value="{{ askEmpty }}" hint-placeholder-val="{{ true }}">
+          <div style="max-width:620px;padding:44px 22px 0 22px">
+            <div style="font-size:17px;font-weight:300;color:#CECDC3;letter-spacing:-0.015em;line-height:1.4;text-wrap:pretty">Ask the vault a question and it will answer from your own links.</div>
+            <div style="font-size:13px;color:#878580;padding-top:12px;line-height:1.6;text-wrap:pretty">It does not receive your search results — it holds the same search you use and calls it itself, rephrasing when the first attempt comes back weak. Every search it runs, and everything that came back, stays in the transcript below the answer. Each sentence carries the record it came from; clicking one lights up that record on the right.</div>
+            <div style="font-size:13px;color:#6F6E69;padding-top:12px;line-height:1.6;text-wrap:pretty">It can read and it can join things up. It cannot move, retag or delete anything — that stays yours until you say otherwise.</div>
+            <div style="display:flex;gap:14px;padding-top:20px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#575653;align-items:center">
+              <span style="padding:2px 6px;border:1px solid #282726;border-radius:3px">↵</span><span>ask</span>
+              <span style="padding:2px 6px;border:1px solid #282726;border-radius:3px">esc</span><span>back to search</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-for list="{{ turns }}" as="t" hint-placeholder-count="1">
+          <div style="border-top:1px solid {{ t.line }};padding:22px 22px 26px 22px">
+            <div style="max-width:660px">
+              <div style="display:flex;gap:11px;align-items:baseline">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#403E3C;flex:0 0 auto">?</div>
+                <div style="font-size:15px;color:#CECDC3;font-weight:400;line-height:1.45;letter-spacing:-0.01em;text-wrap:pretty">{{ t.question }}</div>
+              </div>
+
+              <div style="padding:15px 0 0 23px">
+                <sc-for list="{{ t.calls }}" as="c" hint-placeholder-count="2">
+                  <div style="border-left:1px solid {{ c.edge }};padding:0 0 0 12px;margin-bottom:11px">
+                    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;color:#575653;white-space:nowrap">SEARCH {{ c.n }}</span>
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#B7B5AC">“{{ c.q }}”</span>
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color: {{ c.statusFg }};font-variant-numeric:tabular-nums">{{ c.status }}</span>
+                    </div>
+                    <sc-if value="{{ c.why }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:12px;color:#6F6E69;padding-top:4px;line-height:1.5;text-wrap:pretty">{{ c.why }}</div>
+                    </sc-if>
+                    <sc-for list="{{ c.hits }}" as="h" hint-placeholder-count="3">
+                      <div onClick="{{ h.focus }}" style="display:grid;grid-template-columns:20px minmax(0,1fr) 78px 42px;gap:9px;align-items:baseline;padding:4px 6px 4px 0;border-radius:3px;background: {{ h.bg }}" style-hover="background:#1C1B1A">
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color: {{ h.nFg }};font-variant-numeric:tabular-nums">{{ h.n }}</span>
+                        <span style="font-size:12.5px;color:#B7B5AC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.title }}</span>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6F6E69;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.site }}</span>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color: {{ h.scoreFg }};text-align:right;font-variant-numeric:tabular-nums">{{ h.score }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-for>
+
+                <sc-if value="{{ t.working }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6F6E69;padding:2px 0 0 13px">{{ t.workingText }}</div>
+                </sc-if>
+              </div>
+
+              <sc-if value="{{ t.hasAnswer }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px 0 0 23px;animation:fadeUp 160ms ease-out">
+                  <sc-if value="{{ t.caution }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:9px;align-items:baseline;border:1px solid #343331;border-left:2px solid #D0A215;border-radius:4px;padding:9px 12px;margin-bottom:13px;background:#1C1B1A">
+                      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#D0A215;letter-spacing:0.08em;flex:0 0 auto">WEAK</div>
+                      <div style="font-size:12.5px;color:#878580;line-height:1.5;text-wrap:pretty">{{ t.caution }}</div>
+                    </div>
+                  </sc-if>
+                  <div style="font-size:14px;color:#CECDC3;line-height:1.72;text-wrap:pretty">
+                    <sc-for list="{{ t.parts }}" as="p" hint-placeholder-count="4">
+                      <span style="color: {{ p.fg }}">{{ p.text }}</span>
+                      <sc-for list="{{ p.cites }}" as="ct" hint-placeholder-count="1">
+                        <button onClick="{{ ct.focus }}" title="{{ ct.title }}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color: {{ ct.fg }};border:1px solid {{ ct.border }};background: {{ ct.bg }};border-radius:3px;padding:0 4px;margin:0 2px;vertical-align:2px;line-height:1.5">{{ ct.n }}</button>
+                      </sc-for>
+                      <span> </span>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px;padding-top:15px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#575653;font-variant-numeric:tabular-nums;flex-wrap:wrap;white-space:nowrap">
+                    <span>{{ t.engineLabel }}</span>
+                    <span style="width:3px;height:3px;border-radius:2px;background:#343331"></span>
+                    <span>{{ t.usage }}</span>
+                    <span style="width:3px;height:3px;border-radius:2px;background:#343331"></span>
+                    <span style="color: {{ t.evidenceFg }}">{{ t.evidenceNote }}</span>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ t.dead }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px 0 0 23px;max-width:600px">
+                  <div style="font-size:14px;color:#CECDC3;line-height:1.7;text-wrap:pretty">{{ t.deadText }}</div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#575653;padding-top:13px">{{ t.engineLabel }} · {{ t.usage }} · nothing cited</div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ engineDown }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:0 0 auto;border-top:1px solid #282726;background:#1C1B1A;padding:15px 22px">
+          <div style="display:flex;gap:11px;align-items:baseline;max-width:660px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;color:#D14D41;flex:0 0 auto;padding-top:2px">UNAVAILABLE</div>
+            <div>
+              <div style="font-size:13.5px;color:#CECDC3">{{ downTitle }}</div>
+              <div style="font-size:12.5px;color:#878580;padding-top:5px;line-height:1.55;text-wrap:pretty">{{ downBody }}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#6F6E69;background:#100F0F;border:1px solid #282726;border-radius:4px;padding:6px 9px;margin-top:10px;display:inline-block">{{ downFix }}</div>
+              <div style="display:flex;gap:8px;padding-top:12px">
+                <button onClick="{{ downSwitch }}" style="font-size:12px;color:#CECDC3;background:#282726;border:1px solid #343331;border-radius:4px;padding:5px 10px" style-hover="background:#343331">{{ downSwitchLabel }}</button>
+                <button onClick="{{ goSearch }}" style="font-size:12px;color:#6F6E69;padding:5px 6px">Search manually instead</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ composerOn }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:0 0 auto;border-top:1px solid #282726;background:#1C1B1A;padding:13px 22px 15px 22px">
+          <div style="display:flex;align-items:baseline;gap:11px;max-width:820px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#403E3C">?</div>
+            <input ref="{{ askRef }}" value="{{ askInput }}" onChange="{{ onAskInput }}" onKeyDown="{{ onAskKey }}" placeholder="{{ askPlaceholder }}" spellCheck="false" style="flex:1;background:transparent;border:none;color:#CECDC3;font-size:15px;font-weight:300;padding:0" />
+            <button onClick="{{ submitAsk }}" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color: {{ sendFg }};border:1px solid {{ sendBorder }};border-radius:4px;padding:4px 9px">ask ↵</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="flex:0 0 336px;width:336px;border-left:1px solid #282726;background:#1C1B1A;display:flex;flex-direction:column">
+      <div style="flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #282726">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#575653">EVIDENCE</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#575653;font-variant-numeric:tabular-nums">{{ evidenceCount }}</div>
+      </div>
+      <div style="flex:1;min-height:0;overflow-y:auto">
+        <sc-if value="{{ evidenceEmpty }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:16px 14px;font-size:12.5px;color:#575653;line-height:1.55;text-wrap:pretty">{{ evidenceEmptyText }}</div>
+        </sc-if>
+        <sc-for list="{{ evidence }}" as="e" hint-placeholder-count="0">
+          <div onClick="{{ e.focus }}" style="display:grid;grid-template-columns:22px 40px minmax(0,1fr);gap:9px;align-items:start;padding:10px 13px;border-bottom:1px solid #282726;border-left:2px solid {{ e.edge }};background: {{ e.bg }}" style-hover="background:#232221">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color: {{ e.nFg }};padding-top:2px;font-variant-numeric:tabular-nums">{{ e.n }}</div>
+            <sc-if value="{{ e.hasImg }}" hint-placeholder-val="{{ true }}">
+              <div style="width:40px;height:40px;border-radius:4px;background: {{ e.thumbBg }};border:1px solid #343331"></div>
+            </sc-if>
+            <sc-if value="{{ e.noImg }}" hint-placeholder-val="{{ false }}">
+              <div style="width:40px;height:40px;border-radius:4px;background:#100F0F;border:1px solid #343331;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#403E3C">{{ e.initial }}</div>
+            </sc-if>
+            <div style="min-width:0">
+              <div style="font-size:12.5px;color: {{ e.titleFg }};line-height:1.4;text-wrap:pretty">{{ e.title }}</div>
+              <div style="display:flex;align-items:center;gap:7px;padding-top:4px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6F6E69;font-variant-numeric:tabular-nums">
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.site }}</span>
+                <span>{{ e.date }}</span>
+                <span style="color: {{ e.scoreFg }}">{{ e.score }}</span>
+              </div>
+              <sc-if value="{{ e.open }}" hint-placeholder-val="{{ false }}">
+                <div style="padding-top:7px">
+                  <div style="font-size:12px;color:#878580;line-height:1.5;text-wrap:pretty">{{ e.desc }}</div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6F6E69;padding-top:6px">{{ e.tags }}</div>
+                  <button onClick="{{ e.openInSearch }}" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#878580;border:1px solid #343331;border-radius:3px;padding:3px 7px;margin-top:8px">show in results</button>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:0 0 auto;padding:9px 14px;border-top:1px solid #282726;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#403E3C;line-height:1.5">{{ evidenceFoot }}</div>
+    </div>
+  </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#3AA99F&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#3AA99F&quot;,&quot;#4385BE&quot;,&quot;#DA702C&quot;,&quot;#879A39&quot;],&quot;section&quot;:&quot;Appearance&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;comfortable&quot;,&quot;options&quot;:[&quot;comfortable&quot;,&quot;compact&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;showThumbnails&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;engine&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Claude Code&quot;,&quot;options&quot;:[&quot;Claude Code&quot;,&quot;Codex&quot;,&quot;OpenRouter&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Ask&quot;},&quot;engineIssue&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;none&quot;,&quot;options&quot;:[&quot;none&quot;,&quot;Claude Code not installed&quot;,&quot;OpenRouter key has no credit&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Ask&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;live&quot;,&quot;options&quot;:[&quot;live&quot;,&quot;strong answer&quot;,&quot;weak evidence&quot;,&quot;nothing found&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Ask&quot;},&quot;vaultEmpty&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;States&quot;}}">
+const DATA = [
+  ["Betaflight 4.5 PID tuning, start to finish","A full walkthrough of tuning filters then PID gains on a 5-inch quad, with props off and on.","youtube.com",["fpv","drone","betaflight","tuning","reference"],"2025-11-04","browser",1,"FPV/tuning",0],
+  ["TPU antenna mount for 5in freestyle frames","A flexible printed mount that holds the VTX antenna upright behind the stack without cracking on impact.","makerworld.com",["3d-printing","fpv","tpu","mount","drone"],"2026-02-11","agent",1,"unsorted",2],
+  ["GoPro Bones mount, 20° fixed tilt","A lightweight printable camera mount for the naked GoPro, angled for freestyle, tested on a 5-inch frame.","cults3d.com",["3d-printing","fpv","gopro","mount","drone"],"2025-08-22","browser",1,"FPV/prints",0],
+  ["LangGraph — stateful graphs for LLM agents","A framework for building agents as explicit graphs of steps with persistent state between them.","github.com",["ai","agents","open-source","python","reference"],"2026-06-30","agent",1,"AI/tooling",4],
+  ["llama.cpp — run local models on CPU","Inference for LLaMA-family models in plain C/C++, with quantised weights that fit on a laptop.","github.com",["ai","local-models","open-source","cpp","reference"],"2025-04-17","browser",1,"AI/tooling",6],
+  ["Boards of Canada — Geogaddi, 2002 UK pressing","Release page for the original triple-LP pressing, with matrix numbers and pressing variants listed.","discogs.com",["music","vinyl","electronic","discogs","reference"],"2024-09-13","browser",1,"Music/wants",1],
+  ["","Forum thread comparing 6S and 4S power setups for 5-inch freestyle builds, with logged current draw.","rcgroups.com",["fpv","drone","batteries","reference"],"2024-06-02","browser",0,"FPV/reading",0],
+  ["Soldering XT60 connectors without cold joints","A close-up guide to tinning, heat staging and strain relief on high-current battery leads.","youtube.com",["fpv","soldering","drone","tools"],"2025-02-08","browser",1,"FPV/build",2],
+  ["Bambu A1 filament guide with PETG relief","A printed guide that reduces PETG grinding on the A1 extruder path, remixed for 1.75mm.","makerworld.com",["3d-printing","bambu","petg","upgrade"],"2026-01-19","browser",1,"3D/printer-mods",1],
+  ["Ollama — local model runner with an HTTP API","Pulls, quantises and serves open models locally behind a small REST interface.","github.com",["ai","local-models","open-source","tools","reference"],"2025-09-05","agent",1,"AI/tooling",5],
+  ["Writing tools for agents, not for humans","An essay on why tool descriptions written for people make agents fail, and how to shape them instead.","anthropic.com",["ai","agents","tools","writing","reference"],"2026-04-02","agent",1,"AI/reading",3],
+  ["Vector search is mostly a recall problem","A long post arguing that embedding quality matters less than how candidates are retrieved and reranked.","news.ycombinator.com",["ai","search","embeddings","reference"],"2026-03-14","browser",0,"AI/reading",1],
+  ["Matryoshka representation learning","Paper on embeddings whose leading dimensions are usable alone, letting one vector serve many budgets.","arxiv.org",["ai","embeddings","paper","reference"],"2025-12-01","agent",0,"AI/papers",0],
+  ["Modular drone frame with printable arm guards","A 5-inch frame design where the arm protectors print separately in TPU and clip on.","printables.com",["3d-printing","fpv","frame","drone","tpu"],"2026-05-08","browser",1,"unsorted",1],
+  ["ELRS 3.x setup on a fresh build","Binding, model match and telemetry rates explained for ExpressLRS receivers.","youtube.com",["fpv","elrs","drone","radio","reference"],"2025-06-21","browser",1,"FPV/build",3],
+  ["Aphex Twin — Selected Ambient Works 85-92","Marketplace listing for the 2013 vinyl reissue, including pressing notes and condition grades.","discogs.com",["music","vinyl","ambient","discogs"],"2024-11-27","browser",1,"Music/wants",0],
+  ["Print-in-place hinged parts box","A small parts organiser that prints as one piece with working lids, sized for M3 hardware.","makerworld.com",["3d-printing","organisation","print-in-place"],"2025-10-16","browser",1,"3D/useful",2],
+  ["SQLite as an application file format","The official argument for using SQLite files instead of bespoke formats, with durability notes.","sqlite.org",["databases","reference","architecture","sqlite"],"2024-03-19","browser",0,"Dev/reading",4],
+  ["Bun 1.2 release notes","Runtime release covering the SQLite driver, node compatibility and the bundler's new output modes.","bun.sh",["web","javascript","tools","runtime"],"2025-07-11","browser",1,"Dev/tools",1],
+  ["A visual guide to CSS grid subgrid","Interactive explainer showing how subgrid inherits tracks, with editable examples.","css-tricks.com",["web","css","reference","layout"],"2025-03-02","browser",1,"Dev/reading",2],
+  ["Nozzle temperature towers, done properly","How to print and read a temperature tower so the result actually tells you something.","youtube.com",["3d-printing","calibration","reference"],"2024-08-07","browser",1,"3D/calibration",1],
+  ["Eurorack case power budget calculator","A spreadsheet-style tool for adding up module current draw across +12, -12 and 5V rails.","modulargrid.net",["music","eurorack","synths","tools"],"2025-05-29","browser",0,"Music/gear",3],
+  ["Making a granular sampler in Max/MSP","A build-along series on windowing, grain scheduling and CPU cost in a patch you keep.","youtube.com",["music","max-msp","synths","dsp"],"2024-12-09","browser",1,"Music/making",1],
+  ["Whisper.cpp for offline transcription","Port of Whisper to C++ with GGML weights, fast enough for real time on a laptop.","github.com",["ai","audio","open-source","local-models"],"2025-01-24","agent",1,"AI/tooling",2],
+  ["The Grug Brained Developer","A short, funny argument for choosing boring solutions and refusing complexity you cannot hold.","grugbrain.dev",["reference","writing","engineering"],"2024-05-15","browser",0,"Dev/reading",7],
+  ["FPV goggle diopter lens sizing chart","A table matching prescription strength to the diopter inserts sold for common goggles.","oscarliang.com",["fpv","goggles","reference","drone"],"2025-09-28","browser",0,"FPV/reference",0],
+  ["Printable drone arm jig for repeatable repairs","A jig that holds a broken arm square while the replacement is bolted in.","cults3d.com",["3d-printing","fpv","drone","jig","repair"],"2026-03-26","agent",1,"unsorted",0],
+  ["Designing a hardware store for 3D printed threads","When to print threads, when to heat-set inserts, and the tolerances each needs.","hackaday.com",["3d-printing","mechanical","reference","design"],"2025-04-30","browser",1,"3D/reading",1],
+  ["Retrieval-augmented generation, minus the hype","A measured breakdown of where RAG actually helps and where a keyword index wins.","simonwillison.net",["ai","search","agents","reference"],"2026-02-27","agent",0,"AI/reading",2],
+  ["Tailwind is a design system you did not design","Critique of utility-first CSS as a substitute for deciding your own constraints.","every-layout.dev",["web","css","design","writing"],"2025-08-14","browser",0,"Dev/reading",0],
+  ["Local-first software","Essay setting out seven ideals for software that keeps data on the user's machine and still syncs.","inkandswitch.com",["architecture","local-first","reference","writing"],"2024-02-11","browser",1,"Dev/reading",5],
+  ["Beginner's guide to freestyle line planning","How to plan a line around a spot instead of chasing tricks, filmed over one battery.","youtube.com",["fpv","freestyle","drone","flying"],"2026-06-12","browser",1,"FPV/flying",1],
+  ["Prusa textured PEI sheet, printable holder","A wall holder that keeps spare build plates from bending, with felt pads.","printables.com",["3d-printing","organisation","prusa"],"2025-11-19","browser",1,"3D/useful",0],
+  ["Fujiya & Miyagi — Lightbulbs, 2008 LP","Release page with tracklist, label detail and copies for sale by condition.","discogs.com",["music","vinyl","discogs","electronic"],"2023-10-04","browser",0,"Music/wants",0],
+  ["ESP32 as a wireless telemetry bridge","Wiring and firmware for streaming flight telemetry to a phone over WiFi.","hackster.io",["electronics","esp32","fpv","drone","diy"],"2025-07-02","browser",1,"Electronics",1],
+  ["Postgres full text search, practically","Real query examples for tsvector, ranking and the indexes that make it fast.","postgresql.org",["databases","search","reference","postgres"],"2024-10-21","browser",0,"Dev/reading",3],
+  ["Motion design principles for interfaces","Durations, easing curves and the rule that motion should explain a change, not decorate it.","motion.dev",["design","animation","reference","web"],"2026-01-08","browser",1,"Design",2],
+  ["A drone-frame-sized filament dry box","Sealed box with a printed feed-through and a hygrometer window, fits a 1kg spool.","makerworld.com",["3d-printing","filament","storage","tools"],"2025-12-15","browser",1,"3D/useful",1],
+  ["Reading a spectrogram to find motor noise","Using Blackbox logs to see which frequency band a motor is putting into the gyro.","youtube.com",["fpv","betaflight","tuning","drone","reference"],"2026-04-19","browser",1,"FPV/tuning",2],
+  ["Small, sharp software tools","On writing narrow programs that do one thing and compose, with examples in Python.","simonwillison.net",["tools","python","writing","reference"],"2025-02-26","browser",0,"Dev/reading",4],
+  ["Printable microphone shock mount","A cage and elastic mount for a large-diaphragm condenser, in PLA and TPU.","cults3d.com",["3d-printing","music","recording","mount"],"2024-07-18","browser",1,"Music/gear",0],
+  ["Structured outputs without a schema library","How to constrain model output using grammars instead of retry loops.","github.com",["ai","agents","open-source","tools"],"2026-05-22","agent",1,"AI/tooling",1],
+  ["Bearings, belts and the print quality they cost","Diagnosing ringing and layer shifts back to the motion system rather than the slicer.","teachingtechyt.com",["3d-printing","calibration","mechanical","reference"],"2025-06-05","browser",0,"3D/calibration",2],
+  ["Keyboard-first interfaces are an accessibility win","Argument for designing the keyboard path first, with patterns for lists and dialogs.","adamsilver.io",["design","accessibility","web","reference"],"2026-07-09","browser",0,"Design",1],
+  ["Claude Agent SDK — long-running tool loops","Reference for building agents that keep tool state across turns, with retry and budget controls.","github.com",["ai","agents","open-source","tools","reference"],"2026-07-16","agent",1,"AI/tooling",2],
+  ["What agent memory actually needs to store","Argument that agents need retrieval over their own past actions, not a bigger context window.","simonwillison.net",["ai","agents","memory","embeddings","reference"],"2026-07-24","agent",0,"AI/reading",1],
+  ["Evaluating agents without a benchmark","A practical method for scoring agent runs on your own tasks using paired human judgements.","arxiv.org",["ai","agents","evaluation","paper","reference"],"2026-07-30","agent",0,"AI/papers",0],
+  ["Printable 3.5in drone frame arm, 4mm carbon slot","A replacement arm that takes standard 4mm carbon rod, printed in nylon for a light cinewhoop.","makerworld.com",["3d-printing","fpv","frame","drone","nylon"],"2026-07-21","browser",1,"unsorted",0],
+  ["RPM filtering explained without the maths","Why bidirectional DShot beats a static notch filter, shown on logs from a 5-inch build.","youtube.com",["fpv","betaflight","tuning","drone","reference"],"2026-08-05","browser",1,"FPV/tuning",1],
+  ["Tool-calling models compared on messy schemas","Side-by-side runs of four models on tool definitions with optional and nested arguments.","news.ycombinator.com",["ai","agents","tools","reference"],"2026-08-18","agent",0,"AI/reading",1]
+];
+
+const SYN = {
+  agent:["agents","langgraph","tool","tools","autonomous","llm","ai"],
+  agents:["agent","langgraph","llm","ai","tooling"],
+  ai:["llm","model","models","embeddings","agents","local-models"],
+  part:["mount","bracket","frame","jig","guard","holder","box","case"],
+  parts:["mount","bracket","frame","jig","holder","box"],
+  printed:["3d-printing","print","printable","tpu","pla","petg"],
+  print:["3d-printing","printable","printed","tpu"],
+  printing:["3d-printing","printable","print"],
+  drone:["fpv","quad","freestyle","frame","betaflight","elrs"],
+  quad:["drone","fpv","freestyle","frame"],
+  fpv:["drone","freestyle","goggles","betaflight","elrs"],
+  frame:["drone","fpv","freestyle","arm","chassis"],
+  camera:["gopro","goggles","lens"],
+  music:["vinyl","synths","eurorack","discogs","audio","recording"],
+  record:["vinyl","discogs","lp","pressing"],
+  vinyl:["discogs","lp","pressing","record"],
+  search:["embeddings","retrieval","rag","index","vector"],
+  vector:["embeddings","search","retrieval"],
+  database:["databases","sqlite","postgres","index"],
+  css:["web","layout","design"],
+  layout:["css","grid","design","web"],
+  soldering:["solder","electronics","build","xt60"],
+  battery:["batteries","lipo","6s","4s","power"],
+  antenna:["vtx","mount","radio"],
+  tuning:["pid","betaflight","filters","calibration"],
+  local:["local-models","offline","laptop","cpu"],
+  offline:["local-models","local","whisper"],
+  keyboard:["accessibility","shortcuts","design"],
+  organise:["organisation","storage","box","holder"]
+};
+
+const MONTHS = {
+  2022:[0,0,0,0,0,0,0,0,0,0,1,0],
+  2023:[0,1,2,3,2,4,3,5,4,6,5,6],
+  2024:[3,4,6,5,8,7,9,11,10,9,10,8],
+  2025:[8,11,9,14,16,12,18,15,21,13,14,11],
+  2026:[14,12,17,11,9,8,2,4,0,0,0,0]
+};
+const SITES = [["youtube.com",34],["makerworld.com",26],["github.com",16],["discogs.com",10],["cults3d.com",10],["reddit.com",9],["thingiverse.com",8],["arxiv.org",7],["news.ycombinator.com",7],["printables.com",6],["rcgroups.com",5],["bandcamp.com",5]];
+const TAGS = [["reference",81],["fpv",51],["3d-printing",48],["open-source",39],["ai",30],["music",30],["drone",27],["tools",21],["python",18],["vinyl",15]];
+const MNAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function hash(s){ let h = 2166136261; for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h,16777619); } return (h>>>0); }
+function rnd(seed){ let x = seed || 1; return () => { x ^= x<<13; x ^= x>>>17; x ^= x<<5; x >>>= 0; return x / 4294967296; }; }
+function tokens(s){ return String(s).toLowerCase().split(/[^a-z0-9+#]+/).filter(t => t.length > 1); }
+const STOP = {the:1,and:1,for:1,that:1,with:1,about:1,what:1,did:1,save:1,saved:1,from:1,this:1,have:1,was:1,you:1,one:1,any:1,thing:1,things:1,something:1,anything:1,find:1,show:1,those:1,
+  on:1,in:1,of:1,to:1,my:1,it:1,is:1,at:1,as:1,by:1,or:1,do:1,does:1,how:1,when:1,where:1,which:1,who:1,why:1,much:1,many:1,tell:1,give:1,need:1,want:1,know:1,notes:1,note:1,stuff:1,got:1,ever:1,again:1,there:1,anyone:1,some:1,all:1};
+
+class Component extends DCLogic {
+  state = { query:"", sel:0, view:"search", detailId:null, weak:false, chips:[], askInput:"", turns:[], engine:null, cite:null, spend:0, demoed:false };
+
+  constructor(props){
+    super(props);
+    this.inputRef = React.createRef();
+    this.askRef = React.createRef();
+    this.scrollRef = React.createRef();
+    this.items = DATA.map((d,i) => {
+      const [t,desc,site,tags,date,by,img,folder,opens] = d;
+      const id = hash(site + date + i);
+      const r = rnd(id);
+      return {
+        i, title:t, desc, site, tags, date, by, hasImg:!!img, folder, opens,
+        url: "https://" + site + "/" + (site==="youtube.com" ? "watch?v=" : "") + id.toString(36).slice(0,7),
+        uid: "bk_" + id.toString(16).padStart(8,"0"),
+        indexed: date + "T" + String(6+Math.floor(r()*14)).padStart(2,"0") + ":" + String(Math.floor(r()*60)).padStart(2,"0") + ":" + String(Math.floor(r()*60)).padStart(2,"0") + "Z",
+        vector: Array.from({length:32}, () => (r()*2-1)),
+        blob: tokens(t + " " + desc + " " + site.replace(/\./g," ") + " " + tags.join(" ") + " " + tags.join(" ").replace(/-/g," "))
+      };
+    });
+  }
+
+  componentDidMount(){
+    if (this.inputRef.current) this.inputRef.current.focus();
+    this.onKey = (e) => {
+      const k = e.key;
+      if (k === "/" && document.activeElement !== this.inputRef.current && document.activeElement !== this.askRef.current) { e.preventDefault(); this.setState({view:"search"}, () => this.inputRef.current && this.inputRef.current.focus()); return; }
+      if (this.state.view === "ask") {
+        if (k === "Escape") { e.preventDefault();
+          if (this.state.cite != null) this.setState({cite:null});
+          else this.setState({view:"search"});
+        }
+        return;
+      }
+      if (k === "Escape") { e.preventDefault();
+        if (this.state.detailId != null) this.setState({detailId:null});
+        else if (this.state.chips.length) this.setState({chips:[]});
+        else if (this.state.query) this.setState({query:"", sel:0, weak:false});
+        else if (this.state.view !== "search") this.setState({view:"search"});
+        return; }
+      const rows = this.visible();
+      if (k === "ArrowDown" || k === "ArrowUp") {
+        e.preventDefault();
+        if (!rows.length) return;
+        const n = Math.max(0, Math.min(rows.length-1, this.state.sel + (k === "ArrowDown" ? 1 : -1)));
+        this.setState({sel:n, detailId: this.state.detailId != null ? rows[n].i : null, view:"search"});
+        return;
+      }
+      if (k === "Enter" && rows.length) { e.preventDefault(); this.setState({detailId: rows[Math.min(this.state.sel, rows.length-1)].i}); }
+    };
+    window.addEventListener("keydown", this.onKey);
+  }
+  componentWillUnmount(){ window.removeEventListener("keydown", this.onKey); }
+
+  timeFilter(q){
+    const s = q.toLowerCase();
+    const now = new Date("2026-08-27");
+    const cut = (d) => ({from: new Date(now.getTime() - d*864e5), label:null});
+    if (/last month|past month/.test(s)) return {from:new Date("2026-07-01"), to:new Date("2026-08-01"), label:"July 2026", strip:["last","month","past"]};
+    if (/last week|past week/.test(s)) { const f = cut(7); f.label = "last 7 days"; f.strip=["last","week","past"]; return f; }
+    if (/this year/.test(s)) return {from:new Date("2026-01-01"), label:"2026", strip:["this","year"]};
+    if (/last year/.test(s)) return {from:new Date("2025-01-01"), to:new Date("2026-01-01"), label:"2025", strip:["last","year"]};
+    const y = s.match(/\b(202[2-6])\b/);
+    if (y) return {from:new Date(y[1]+"-01-01"), to:new Date((+y[1]+1)+"-01-01"), label:y[1], strip:[y[1]]};
+    if (/recent|lately|this month/.test(s)) { const f = cut(45); f.label="last 45 days"; f.strip=["recent","lately","this","month"]; return f; }
+    return null;
+  }
+
+  scored(qIn){
+    const q = (qIn === undefined ? this.state.query : qIn).trim();
+    const tf = this.timeFilter(q);
+    let qt = tokens(q).filter(t => !STOP[t]);
+    if (tf && tf.strip) qt = qt.filter(t => tf.strip.indexOf(t) < 0);
+    const exp = [];
+    qt.forEach(t => { (SYN[t] || []).forEach(s => { if (qt.indexOf(s) < 0) exp.push(s); }); });
+    const out = this.items.map(it => {
+      let sum = 0;
+      const tagset = it.tags.concat(it.tags.join(" ").split("-"));
+      qt.forEach(t => {
+        const inTag = it.tags.some(g => g === t || g.indexOf(t) === 0);
+        const long = t.length >= 4;
+        const inTitle = tokens(it.title).some(w => long ? w.indexOf(t) === 0 : w === t);
+        const inDesc = tokens(it.desc).some(w => long ? w.indexOf(t) === 0 : w === t);
+        const inSite = long && it.site.indexOf(t) >= 0;
+        if (inTag) sum += 0.52;
+        if (inTitle) sum += 0.34;
+        if (inDesc) sum += 0.2;
+        if (inSite) sum += 0.26;
+      });
+      exp.forEach(t => {
+        if (it.tags.indexOf(t) >= 0) sum += 0.2;
+        else if (it.blob.indexOf(t) >= 0) sum += 0.11;
+      });
+      let score = sum <= 0 ? 0 : sum / (sum + 0.62);
+      const raw = score;
+      let inWindow = true;
+      if (tf) {
+        const dd = new Date(it.date);
+        inWindow = dd >= tf.from && (!tf.to || dd < tf.to);
+      }
+      if (tf) {
+        const d = new Date(it.date);
+        const ok = d >= tf.from && (!tf.to || d < tf.to);
+        if (!ok) score = qt.length ? score * 0.06 : 0;
+        else if (!qt.length) score = 0.8;
+        else score = Math.min(0.98, score + 0.06);
+      }
+      return Object.assign({}, it, {score, raw, inWindow});
+    });
+    out.sort((a,b) => b.score - a.score || (a.date < b.date ? 1 : -1));
+    return {list:out, tf, hasQ: q.length > 1, qt};
+  }
+
+  visible(){
+    if (this.props.vaultEmpty) return [];
+    const {list, hasQ} = this.scored();
+    if (!hasQ) return this.items.slice().sort((a,b) => a.date < b.date ? 1 : -1).slice(0,14);
+    let hits = list.filter(x => x.score >= 0.34);
+    hits = this.applyChips(hits);
+    this._overBar = hits.length;
+    const best = hits.length ? hits[0].score : 0;
+    if (best < 0.45) {
+      if (!this.state.weak) return [];
+      const w = this.applyChips(list.filter(x => x.score > 0.05));
+      this._overBar = w.length;
+      return w.slice(0,3);
+    }
+    return hits.slice(0,18);
+  }
+
+  applyChips(list){
+    const ch = this.state.chips;
+    if (!ch.length) return list;
+    const years = ch.filter(c => /^\d{4}$/.test(c));
+    const tags = ch.filter(c => !/^\d{4}$/.test(c));
+    return list.filter(x => (!years.length || years.indexOf(x.date.slice(0,4)) >= 0) && (!tags.length || tags.every(t => x.tags.indexOf(t) >= 0)));
+  }
+
+  fmtDate(d){ const p = d.split("-"); return p[2] + " " + MNAMES[+p[1]-1] + " " + p[0].slice(2); }
+  ago(d){ const days = Math.round((new Date("2026-08-27") - new Date(d)) / 864e5); if (days > 500) return Math.round(days/365*10)/10 + " yr"; return Math.round(days/30) + " mo"; }
+  thumb(it){ const h = hash(it.site + it.title) % 360; return "linear-gradient(150deg, hsl(" + h + ",9%,25%), hsl(" + ((h+24)%360) + ",8%,13%))"; }
+
+  engineKey(){
+    const p = (this.props.engine || "Claude Code");
+    return this.state.engine || (p.indexOf("Codex") === 0 ? "codex" : p.indexOf("Open") === 0 ? "openrouter" : "claude");
+  }
+  engineInfo(k){
+    if (k === "codex") return {label:"Codex CLI", sub:"local", paid:false, model:"gpt-5-codex", title:"Installed on this Mac · no cost per message"};
+    if (k === "openrouter") return {label:"OpenRouter", sub:"metered", paid:true, model:"claude-sonnet-4.5", title:"Works on any machine · costs cents per conversation"};
+    return {label:"Claude Code", sub:"local", paid:false, model:"claude-sonnet-4.5", title:"Installed on this Mac · no cost per message"};
+  }
+  engineIssue(){
+    const iss = this.props.engineIssue || "none";
+    const k = this.engineKey();
+    if (iss.indexOf("Claude") === 0 && k === "claude") return "missing";
+    if (iss.indexOf("Open") === 0 && k === "openrouter") return "nocredit";
+    return null;
+  }
+  lowerFirst(s){ return s.charAt(0).toLowerCase() + s.slice(1); }
+
+  plan(question){
+    const s = question.toLowerCase();
+    let qt = tokens(s).filter(t => !STOP[t] && t !== "vault" && t !== "links" && t !== "link");
+    const tf = this.timeFilter(s);
+    if (tf && tf.strip) qt = qt.filter(t => tf.strip.indexOf(t) < 0);
+    const core = qt.slice(0,5).join(" ") + (tf && tf.label ? " " + tf.label : "");
+    const out = [{q: core.trim() || s.slice(0,40), why:null}];
+    const exp = [];
+    qt.forEach(t => (SYN[t] || []).slice(0,2).forEach(x => { if (qt.indexOf(x) < 0 && exp.indexOf(x) < 0) exp.push(x); }));
+    if (exp.length) out.push({q: (qt.slice(0,2).concat(exp.slice(0,3))).join(" "), why:"Rephrased with the words you actually tag things with."});
+    if (qt.length) out.push({q: qt.slice(-2).concat(exp.slice(0,1)).join(" "), why:"Dropped the framing and searched the object itself."});
+    return out.filter((x,i,a) => x.q && a.findIndex(y => y.q === x.q) === i).slice(0,3);
+  }
+
+  runSearch(q){
+    const {list} = this.scored(q);
+    const over = list.filter(x => x.score >= 0.34);
+    return {total: over.length, hits: over.slice(0,4)};
+  }
+
+  ask(question, instant){
+    const engine = this.engineKey();
+    const plan = this.plan(question);
+    const turn = {question, engine, calls:[], plan, numbers:{}, done:false, ms:0, tok:0};
+    const idx = this.state.turns.length;
+    const patch = (fn) => this.setState(s => {
+      const turns = s.turns.slice();
+      const t = Object.assign({}, turns[idx]);
+      fn(t);
+      turns[idx] = t;
+      return {turns};
+    }, () => this.scrollBottom());
+    this.setState(s => ({turns: s.turns.concat([turn]), askInput:"", cite:null}), () => this.scrollBottom());
+
+    const step = (i) => {
+      const res = this.runSearch(plan[i].q);
+      const hits = res.hits;
+      patch(t => {
+        const nums = Object.assign({}, t.numbers);
+        hits.forEach(h => { if (!nums[h.i]) nums[h.i] = Object.keys(nums).length + 1; });
+        t.numbers = nums;
+        t.calls = t.calls.concat([{q: plan[i].q, why: plan[i].why, total: res.total, hits: hits.map(h => ({i:h.i, score:h.score}))}]);
+      });
+      const best = hits.length ? hits[0].score : 0;
+      const last = i === plan.length - 1;
+      if (best >= 0.55 || last) { if (instant) finish(); else setTimeout(finish, 380); }
+      else if (instant) step(i+1);
+      else setTimeout(() => step(i+1), 560);
+    };
+    const finish = () => {
+      patch(t => {
+        t.done = true;
+        const seen = {};
+        const cited = [];
+        t.calls.forEach(c => c.hits.forEach(h => { if (!seen[h.i]) { seen[h.i] = 1; cited.push(h); } }));
+        cited.sort((a,b) => b.score - a.score);
+        t.cited = cited.slice(0,6);
+        t.tok = 780 + t.calls.length * 190 + cited.length * 210;
+        t.ms = 900 + t.calls.length * 620;
+      });
+      if (this.engineInfo(engine).paid) this.setState(s => ({spend: s.spend + 0.0042 + plan.length * 0.0018}));
+    };
+    if (instant) step(0); else setTimeout(() => step(0), 260);
+  }
+
+  scrollBottom(){
+    const go = () => { const el = document.getElementById("ask-transcript"); if (el) el.scrollTop = el.scrollHeight; };
+    go(); requestAnimationFrame(go); setTimeout(go, 60); setTimeout(go, 240);
+  }
+
+  componentDidUpdate(prev){
+    if (this.state.turns.length && this.state.view === "ask") {
+      const t = this.state.turns[this.state.turns.length-1];
+      const sig = this.state.turns.length + ":" + t.calls.length + ":" + (t.done ? 1 : 0);
+      if (sig !== this._sig) { this._sig = sig; this.scrollBottom(); }
+    }
+    const d = this.props.demoState;
+    if (d && d !== "live" && d !== prev.demoState) this.seedDemo(d);
+  }
+  seedDemo(mode){
+    const pick = (cands, lo, hi) => {
+      for (let i=0;i<cands.length;i++){
+        const l = this.scored(cands[i]).list;
+        const b = l.length ? l[0].score : 0;
+        if (b >= lo && b < hi) return cands[i];
+      }
+      return cands[0];
+    };
+    let q;
+    if (mode.indexOf("weak") === 0) q = pick(["how do I stop PETG grinding","what did I save about strain relief","anything on nylon parts","notes on cinewhoop arms"], 0.34, 0.56);
+    else if (mode.indexOf("nothing") === 0) q = pick(["what did I save about mortgage rates","anything on sourdough starters","notes on tax deadlines"], 0, 0.34);
+    else q = "what did I save about PID tuning?";
+    this.setState({view:"ask", turns:[], spend:0}, () => this.ask(q, true));
+  }
+
+  askVals(accent){
+    const k = this.engineKey();
+    const info = this.engineInfo(k);
+    const issue = this.engineIssue();
+    const cite = this.state.cite;
+    const byId = (i) => this.items.find(x => x.i === i);
+
+    const turns = this.state.turns.map((t,ti) => {
+      const tinfo = this.engineInfo(t.engine);
+      const cited = t.cited || [];
+      const best = cited.length ? cited[0].score : 0;
+      const weak = t.done && cited.length > 0 && best < 0.56;
+      const numOf = (i) => t.numbers[i];
+      const chip = (i, score) => {
+        const on = cite === i;
+        const strong = score >= 0.62;
+        const r = byId(i);
+        return {n: numOf(i), title: (r.title || r.desc).slice(0,70) + " · " + score.toFixed(2),
+          fg: on ? "#100F0F" : strong ? accent : "#878580",
+          bg: on ? accent : "transparent",
+          border: on ? accent : strong ? accent + "55" : "#343331",
+          focus: () => this.setState({cite: on ? null : i})};
+      };
+
+      let parts = [], caution = null, dead = false, deadText = "";
+      if (t.done) {
+        if (!cited.length) {
+          dead = true;
+          const qs = t.calls.map(c => "“" + c.q + "”").join(", ");
+          const all = this.scored(t.question).list;
+          deadText = "Nothing in the vault answers that. I searched " + t.calls.length + (t.calls.length === 1 ? " way — " : " ways — ") + qs + " — and the best score across all 623 records was " + (all[0] ? all[0].score.toFixed(2) : "0.00") + ", under the 0.45 bar. Either you never saved it, or it is described in words this index cannot reach. Nothing has been made up to fill the gap.";
+        } else if (weak && cited.length === 1) {
+          const r = byId(cited[0].i);
+          caution = "One match, at " + best.toFixed(2) + ", from a single page. This is the closest thing you saved — a lead, not an answer.";
+          parts = [
+            {text: r.desc, fg:"#CECDC3", cites:[chip(cited[0].i, cited[0].score)]},
+            {text: "Saved " + this.fmtDate(r.date) + " from " + r.site + ", and " + (r.opens === 0 ? "never opened since." : "opened " + r.opens + " times since."), fg:"#878580", cites:[]}
+          ];
+        } else {
+          const list = cited.slice(0, weak ? 2 : 4).map(h => Object.assign({}, byId(h.i), {score:h.score}));
+          const dates = list.map(x => x.date).sort();
+          const oldest = dates[0];
+          if (weak) caution = "Best match " + best.toFixed(2) + " — under the bar the search usually holds. Read this as the nearest thing you saved, not as settled.";
+          parts.push({text: list.length + (list.length === 1 ? " saved page bears" : " saved pages bear") + " on this, from " + this.fmtDate(dates[0]) + " to " + this.fmtDate(dates[dates.length-1]) + ".", fg:"#878580", cites:[]});
+          list.forEach((r,i) => {
+            let text;
+            if (i === 0) text = r.desc;
+            else if (r.date === oldest) text = "Further back, from " + this.fmtDate(r.date) + ": " + this.lowerFirst(r.desc);
+            else if (i === 2) text = "From " + r.site + ", " + this.lowerFirst(r.desc);
+            else text = "Also in the vault: " + this.lowerFirst(r.desc);
+            parts.push({text, fg:"#CECDC3", cites:[chip(r.i, r.score)]});
+          });
+          const tagCount = {};
+          list.forEach(r => r.tags.forEach(g => tagCount[g] = (tagCount[g]||0)+1));
+          const shared = Object.keys(tagCount).filter(g => tagCount[g] === list.length).slice(0,3);
+          const tail = Math.max(0, (t.calls.reduce((m,c) => Math.max(m, c.total || 0), 0)) - cited.length);
+          const tailText = tail ? " " + tail + " more cleared 0.34 but scored lower; " + (list.length === 1 ? "this one is" : "these " + list.length + " are") + " the strongest." : "";
+          if (shared.length) parts.push({text: (shared.length === 1 ? shared[0] + " is the tag on all " : shared.join(", ") + " are on all ") + list.length + "." + tailText, fg:"#878580", cites: list.map(r => chip(r.i, r.score))});
+          else if (tail) parts.push({text: tailText.trim(), fg:"#878580", cites:[]});
+        }
+      }
+
+      return {
+        question: t.question,
+        line: ti === 0 ? "transparent" : "#282726",
+        calls: t.calls.map((c,ci) => ({
+          n: ci + 1, q: c.q, why: c.why,
+          edge: c.hits.length ? "#343331" : "#403E3C",
+          status: c.hits.length
+            ? c.total + (c.total === 1 ? " result over 0.34 · " : " results over 0.34 · ") + (c.total > c.hits.length ? "top " + c.hits.length + " read · " : "all read · ") + "best " + c.hits[0].score.toFixed(2)
+            : "0 results · nothing over 0.34",
+          statusFg: c.hits.length ? (c.hits[0].score >= 0.62 ? accent : "#878580") : "#6F6E69",
+          hits: c.hits.map(h => {
+            const r = byId(h.i);
+            const on = cite === h.i;
+            return {n: numOf(h.i), title: r.title || r.desc.split(" ").slice(0,7).join(" ") + "…", site: r.site,
+              score: h.score.toFixed(2),
+              scoreFg: h.score >= 0.62 ? accent : "#878580",
+              nFg: on ? accent : "#575653",
+              bg: on ? "#232221" : "transparent",
+              focus: () => this.setState({cite: on ? null : h.i})};
+          })
+        })),
+        working: !t.done,
+        workingText: t.calls.length === 0 ? "calling search…" : "reading " + (t.calls[t.calls.length-1].hits.length || 0) + " records…",
+        hasAnswer: t.done && parts.length > 0,
+        parts, caution, dead, deadText,
+        engineLabel: tinfo.label + " · " + tinfo.model,
+        usage: t.tok.toLocaleString() + " tok · " + (t.ms/1000).toFixed(1) + "s · " + (tinfo.paid ? "$" + (0.0042 + t.calls.length * 0.0018).toFixed(4) : "local, no cost"),
+        evidenceNote: cited.length ? cited.length + " records cited · " + t.calls.length + (t.calls.length === 1 ? " search" : " searches") : "no records cited",
+        evidenceFg: cited.length && best >= 0.62 ? accent : "#575653"
+      };
+    });
+
+    const lastTurn = this.state.turns[this.state.turns.length - 1];
+    const ev = lastTurn && lastTurn.cited ? lastTurn.cited : [];
+    const evidence = ev.map(h => {
+      const r = byId(h.i);
+      const on = cite === h.i;
+      return {
+        n: lastTurn.numbers[h.i], nFg: on ? accent : "#575653",
+        title: r.title || r.desc.split(" ").slice(0,8).join(" ") + "…",
+        titleFg: on ? "#CECDC3" : "#B7B5AC",
+        site: r.site, date: this.fmtDate(r.date),
+        score: h.score.toFixed(2), scoreFg: h.score >= 0.62 ? accent : "#6F6E69",
+        hasImg: r.hasImg, noImg: !r.hasImg, initial: r.site[0].toUpperCase(), thumbBg: this.thumb(r),
+        edge: on ? accent : "transparent", bg: on ? "#232221" : "transparent",
+        open: on, desc: r.desc, tags: r.tags.join("  ·  "),
+        focus: () => this.setState({cite: on ? null : h.i}),
+        openInSearch: () => this.setState({view:"search", query: r.tags.slice(0,3).join(" "), chips:[], sel:0, weak:false, detailId: r.i})
+      };
+    });
+
+    return {
+      isAsk: this.state.view === "ask",
+      goAsk: () => this.setState({view:"ask", detailId:null}, () => this.askRef.current && this.askRef.current.focus()),
+      tabAskBg: this.state.view === "ask" ? "#282726" : "transparent",
+      tabAskFg: this.state.view === "ask" ? "#CECDC3" : "#6F6E69",
+      engines: [["claude","Claude Code"],["codex","Codex"],["openrouter","OpenRouter"]].map(([key,label]) => ({
+        label, title: this.engineInfo(key).title,
+        fg: k === key ? "#CECDC3" : "#575653",
+        bg: k === key ? "#282726" : "transparent",
+        pick: () => this.setState({engine:key})
+      })),
+      engineMeter: info.paid
+        ? "$" + this.state.spend.toFixed(3) + " this chat · $3.86 left"
+        : "local · no cost",
+      askEmpty: this.state.turns.length === 0,
+      turns,
+      scrollRef: this.scrollRef, askRef: this.askRef, askInput: this.state.askInput,
+      askPlaceholder: this.state.turns.length ? "Ask again, or narrow it…" : "What do you half-remember saving?",
+      onAskInput: (e) => this.setState({askInput: e.target.value}),
+      onAskKey: (e) => { if (e.key === "Enter" && this.state.askInput.trim().length > 2) { e.preventDefault(); this.ask(this.state.askInput.trim()); } },
+      submitAsk: () => { if (this.state.askInput.trim().length > 2) this.ask(this.state.askInput.trim()); },
+      sendFg: this.state.askInput.trim().length > 2 ? accent : "#575653",
+      sendBorder: this.state.askInput.trim().length > 2 ? accent + "55" : "#282726",
+      composerOn: !issue,
+      engineDown: !!issue,
+      downTitle: issue === "missing" ? "Claude Code is not installed on this Mac." : "The OpenRouter key has no credit left.",
+      downBody: issue === "missing"
+        ? "The vault talks to the Claude Code binary on your machine; nothing here reaches the network. Install it, or switch to an engine that is already there — the vault and its index are unaffected either way."
+        : "The last conversation spent the remaining balance. Top up, or switch to a local engine: Claude Code and Codex are already on this Mac and cost nothing per message.",
+      downFix: issue === "missing" ? "npm i -g @anthropic-ai/claude-code" : "openrouter.ai/credits  ·  key ····7f31  ·  $0.00 left",
+      downSwitch: () => this.setState({engine: issue === "missing" ? "codex" : "claude"}),
+      downSwitchLabel: issue === "missing" ? "Use Codex instead" : "Use Claude Code instead",
+      evidence, evidenceEmpty: evidence.length === 0,
+      evidenceCount: evidence.length ? evidence.length + " of 623" : "—",
+      evidenceEmptyText: !lastTurn ? "Every record the model reads appears here, numbered as it is cited. You see exactly what it saw."
+        : lastTurn.done ? "That question returned nothing, so there is nothing to show. An empty search is a result, not a failure."
+        : "Waiting on the first search…",
+      evidenceFoot: "Read-only. Nothing here can be moved, retagged or deleted from a conversation.",
+      cite,
+    };
+  }
+
+  renderVals(){
+    const accent = this.props.accent || "#3AA99F";
+    const dense = this.props.density === "compact";
+    const pad = dense ? "8px" : "11px";
+    const q = this.state.query.trim();
+    const {list, tf, hasQ} = this.scored();
+    const empty = !!this.props.vaultEmpty;
+    const rowsRaw = this.visible();
+    const bestScore = hasQ && !empty ? (this.applyChips(list.filter(x => x.score >= 0.34))[0] || {score:0}).score : 1;
+    const noGood = hasQ && !empty && bestScore < 0.45 && !this.state.weak;
+    const sel = Math.min(this.state.sel, Math.max(0, rowsRaw.length-1));
+
+    const dupMatch = /^(https?:\/\/|www\.)|\.(com|org|dev|net|io|sh)(\/|$)/.test(q) ? list.find(x => x.score > 0.2 || q.indexOf(x.site) >= 0) : null;
+
+    const rows = rowsRaw.map((it,idx) => {
+      const strong = it.score >= 0.75;
+      const isSel = idx === sel;
+      const barsOn = Math.max(1, Math.round(it.score * 5));
+      return {
+        i: it.i,
+        title: it.title || it.desc.split(" ").slice(0,7).join(" ") + "…",
+        untitled: !it.title,
+        titleFg: isSel ? "#CECDC3" : (it.title ? "#CECDC3" : "#878580"),
+        desc: it.desc,
+        site: it.site,
+        hasImg: it.hasImg && this.props.showThumbnails !== false,
+        noImg: !(it.hasImg && this.props.showThumbnails !== false),
+        initial: it.site[0].toUpperCase(),
+        thumbBg: this.thumb(it),
+        tags: it.tags.slice(0,5).map(t => ({label:t, fg: this.state.chips.indexOf(t) >= 0 ? accent : "#6F6E69"})),
+        dateText: this.fmtDate(it.date),
+        scoreText: hasQ ? it.score.toFixed(2) : "—",
+        scoreFg: hasQ ? (strong ? accent : it.score >= 0.55 ? "#878580" : "#575653") : "#403E3C",
+        bars: [0,1,2,3,4].map(n => ({c: !hasQ ? "#282726" : n < barsOn ? (strong ? accent : "#575653") : "#282726"})),
+        bg: isSel ? "#232221" : "transparent",
+        edge: isSel ? (strong && hasQ ? accent : "#403E3C") : "transparent",
+        pad,
+        select: () => this.setState({sel:idx, detailId: it.i})
+      };
+    });
+
+    let chips = [];
+    if (hasQ && !empty) {
+      const pool = this.applyChips(list.filter(x => x.score >= 0.34)).length ? list.filter(x => x.score >= 0.34) : list.filter(x => x.score > 0.05).slice(0,3);
+      const tc = {}, yc = {};
+      pool.forEach(x => { x.tags.forEach(t => tc[t] = (tc[t]||0)+1); yc[x.date.slice(0,4)] = (yc[x.date.slice(0,4)]||0)+1; });
+      const mk = (label,count) => {
+        const on = this.state.chips.indexOf(label) >= 0;
+        return {label, count, border: on ? accent + "66" : "#282726", bg: on ? accent + "14" : "transparent", fg: on ? accent : "#878580",
+          toggle: () => this.setState(s => ({chips: on ? s.chips.filter(c => c !== label) : s.chips.concat([label]), sel:0}))};
+      };
+      chips = Object.keys(yc).sort().reverse().map(y => mk(y, yc[y]))
+        .concat(Object.keys(tc).sort((a,b) => tc[b]-tc[a]).slice(0,7).map(t => mk(t, tc[t])));
+    }
+
+    const d = this.state.detailId != null ? this.items.find(x => x.i === this.state.detailId) : null;
+    const detail = d ? {
+      ordinal: "#" + (d.i+1) + " / 623",
+      title: d.title || d.desc.split(" ").slice(0,7).join(" ") + "…",
+      desc: d.desc,
+      url: d.url,
+      hasImg: d.hasImg, noImg: !d.hasImg, initial: d.site[0].toUpperCase(), thumbBg: this.thumb(d),
+      tagList: d.tags.map(t => ({label:t})),
+      meta: [
+        {k:"SAVED", v:this.fmtDate(d.date) + "  ·  " + this.ago(d.date) + " ago", fg:"#878580"},
+        {k:"SAVED BY", v: d.by === "agent" ? "agent · via chat" : "browser · extension", fg: d.by === "agent" ? accent : "#878580"},
+        {k:"SITE", v:d.site, fg:"#878580"},
+        {k:"FOLDER", v:d.folder === "unsorted" ? "unsorted (imported)" : d.folder, fg:"#878580"},
+        {k:"OPENED", v: d.opens === 0 ? "never since saving" : d.opens + " times", fg: d.opens === 0 ? "#6F6E69" : "#878580"},
+        {k:"INDEXED", v:d.indexed, fg:"#878580"},
+        {k:"ID", v:d.uid, fg:"#6F6E69"}
+      ],
+      vecMeta: "1024 d · cosine · v3",
+      vector: d.vector.map(n => ({n: (n<0?"":"+") + n.toFixed(3), fg: Math.abs(n) > 0.6 ? "#878580" : "#575653"})),
+      findSimilar: () => this.setState({query: d.tags.slice(0,3).join(" "), sel:0, weak:false, chips:[]})
+    } : null;
+
+    const months = [];
+    [2022,2023,2024,2025,2026].forEach(y => MONTHS[y].forEach((n,m) => months.push({
+      h: Math.round(n/21*104), c: n === 0 ? "#1C1B1A" : y >= 2025 ? "#575653" : "#343331",
+      tip: MNAMES[m] + " " + y + " · " + n + " saved"
+    })));
+    const yearAxis = [[2022,1],[2023,41],[2024,90],[2025,162],[2026,77]].map(([y,c]) => ({label:String(y), count:c, flex:12, fg: y >= 2025 ? "#878580" : "#6F6E69"}));
+
+    return Object.assign(this.askVals(accent), {
+      accent,
+      vaultMeta: empty ? "0 links · nothing indexed" : "623 links · 367 sites · 774 tags",
+      isSearch: this.state.view === "search", isLandscape: this.state.view === "landscape",
+      goSearch: () => this.setState({view:"search"}), goLandscape: () => this.setState({view:"landscape", detailId:null}),
+      tabSearchBg: this.state.view === "search" ? "#343331" : "transparent",
+      tabSearchFg: this.state.view === "search" ? "#CECDC3" : "#6F6E69",
+      tabLandBg: this.state.view === "landscape" ? "#343331" : "transparent",
+      tabLandFg: this.state.view === "landscape" ? "#CECDC3" : "#6F6E69",
+      inputRef: this.inputRef, query: this.state.query,
+      onQuery: (e) => this.setState({query: e.target.value, sel:0, weak:false, detailId:null}),
+      hasQuery: q.length > 0,
+      clearQuery: () => { this.setState({query:"", sel:0, weak:false, chips:[], detailId:null}); if (this.inputRef.current) this.inputRef.current.focus(); },
+      statusText: empty ? "0 indexed · vault empty"
+        : !hasQ ? "623 indexed · resting · type to search by meaning"
+        : noGood ? "623 searched · 0 confident matches · " + (18 + (q.length % 9)) + " ms"
+        : (this._overBar || rows.length) + " over the bar · " + (this._overBar > rows.length ? rows.length + " shown · " : "all shown · ") + "best " + (rows[0] ? rows[0].scoreText : "—") + " · " + (18 + (q.length % 9)) + " ms",
+      statusColor: noGood ? "#878580" : "#6F6E69",
+      hasTimeFilter: !!(tf && tf.label), timeLabel: tf && tf.label ? tf.label : "",
+      showChips: hasQ && !empty && chips.length > 0 && !noGood, chips, hasActiveChips: this.state.chips.length > 0,
+      clearChips: () => this.setState({chips:[], sel:0}),
+      showList: !empty && !noGood && rows.length > 0,
+      isEmptyVault: empty,
+      listLabel: hasQ ? (this.state.weak ? "WEAK MATCHES — SHOWN ON REQUEST" : "RANKED BY MEANING") : "RECENTLY SAVED · LAST 14",
+      rows,
+      tailNote: !hasQ || !rows.length ? null
+        : this._overBar > rows.length
+          ? (this._overBar - rows.length) + " more cleared 0.34 but scored lower — narrow with a tag or year above to reach them."
+          : (this.state.weak ? null : "Everything below 0.34 was withheld — weak matches are noise, not results."),
+      noGood,
+      noGoodBody: (() => {
+        const top = list[0] ? list[0].score : 0;
+        if (tf && tf.label) {
+          const out = list.filter(x => x.raw >= 0.45 && !x.inWindow).length;
+          if (out) return "Nothing saved in " + tf.label + " is about this. " + (out === 1 ? "One match sits" : out + " matches sit") + " outside that window — drop the time constraint to see them.";
+          return "Nothing from " + tf.label + ", and nothing outside it either: the best score across all 623 records was " + top.toFixed(2) + ".";
+        }
+        if (top >= 0.3) return "623 records searched by meaning. The closest came in at " + top.toFixed(2) + " — near the 0.45 threshold but not near enough to trust. Try describing what the thing did rather than what it was called.";
+        return "623 records searched by meaning. The best score was " + top.toFixed(2) + " — nothing in here is remotely about this. Either it was never saved, or it is described in words this search cannot reach.";
+      })(),
+      dropTime: () => this.setState({query: this.state.query.replace(/\b(last|past|this)\s+(week|month|year)\b|\brecent(ly)?\b|\b202[2-6]\b/gi, "").replace(/\s+/g, " ").trim(), sel:0, weak:false}),
+      weakBtnLabel: "Show 3 weak matches anyway",
+      showWeak: () => this.setState({weak:true, sel:0}),
+      dupBanner: !!dupMatch, 
+      dupTitle: dupMatch ? "You already saved this — " + this.ago(dupMatch.date) + " ago." : "",
+      dupSub: dupMatch ? dupMatch.site + " · " + this.fmtDate(dupMatch.date) + " · " + (dupMatch.opens === 0 ? "never opened since" : "opened " + dupMatch.opens + " times") : "",
+      detail, closeDetail: () => this.setState({detailId:null}),
+      stats: [
+        {n:"623", label:"links saved", sub:"+77 so far in 2026"},
+        {n:"367", label:"distinct sites", sub:"312 appear once"},
+        {n:"774", label:"distinct tags", sub:"4.9 per link"},
+        {n:"1,517", label:"days of saving", sub:"since 12 Nov 2022"}
+      ],
+      months, yearAxis,
+      monthsNote: "Half of the vault arrived in the last twenty months. 2025 was the heaviest year at 162 links; 2026 is on pace to pass it.",
+      sites: SITES.map(([name,n]) => ({name, n, pct: Math.round(n/34*100), c: n >= 16 ? "#575653" : "#343331"})),
+      sitesNote: "Five sites account for 96 links. The other 527 are spread across 362 sites, 312 of which you visited exactly once — which is why a folder per site was never going to work.",
+      tagBars: TAGS.map(([name,n]) => ({name, n, pct: Math.round(n/81*100), c: n >= 39 ? "#575653" : "#343331"})),
+      tagsNote: "Seven tags cover most of the collection; the remaining 767 appear once or twice. Tags are worth reading on a result and worth narrowing with — never worth browsing.",
+      forgotten: this.items.filter(x => x.opens === 0).slice(0,6).map((x,i) => ({
+        title: x.title || x.desc.split(" ").slice(0,8).join(" ") + "…", site: x.site, ago: this.ago(x.date) + " ago", line: i === 0 ? "transparent" : "#282726"
+      }))
+    });
+  }
+}
+
+</script>
+</body>
+</html>

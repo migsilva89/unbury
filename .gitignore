@@ -1,0 +1,64 @@
+# --- Secrets -----------------------------------------------------------------
+# Never commit a real key. Nothing here needs a .env any more — the app keeps
+# its key in the macOS Keychain — but the rule stands for anything that lands.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.mobileprovision
+
+# --- Swift / SwiftPM build output --------------------------------------------
+# Every SwiftPM build directory, whatever it was named. A stray
+# `.build.before-single-executable` backup holds whole git checkouts, and a
+# nested repository breaks `git status` in this one.
+.build*
+.swiftpm/
+build/
+*.dmg
+*.app/
+DerivedData/
+Package.pins
+*.xcuserstate
+xcuserdata/
+
+# --- Python -------------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- macOS --------------------------------------------------------------------
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# --- Someone's library: data, never program -----------------------------------
+# The live vault lives in ~/Library/Application Support/Unbury and must stay
+# outside this repository. These patterns exist so a stray copy of it, or of an
+# exported browser bookmarks file, can never be committed.
+vault.json
+vectors.bin
+conversations/
+snapshot-please
+settings.json
+Bookmarks
+*.jsonl
+*.sqlite
+*.sqlite3
+*.db
+
+# --- Screenshots of the running app -------------------------------------------
+# Window captures show real saved links. app/clear and app/type are two such
+# captures, written by the snapshot test channel when given a name instead of a
+# .png path. Screenshots go in docs/ deliberately, never at the root of app/.
+/app/clear
+/app/type
+/app/*.png
+screenshots/
