@@ -4,7 +4,7 @@ Notable changes, newest first. Versions follow [semantic versioning](https://sem
 with the caveat that 0.x means the settings, the store format and the command line may still
 change between releases.
 
-## 0.1.0
+## 0.1.0 — 2026-08-30
 
 First release.
 

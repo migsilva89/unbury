@@ -35,7 +35,7 @@ xcrun notarytool store-credentials imark \
   --apple-id you@example.com --team-id <your-team-id> --password <app-specific-password>
 ```
 
-`imark` is the profile name this Mac already uses across Miguel's apps, and it
+`imark` is the profile name this Mac already uses across the owner's apps, and it
 is what `release.sh` reaches for by default. On a machine where it is called
 something else, set `UNBURY_NOTARY_PROFILE`.
 

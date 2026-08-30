@@ -8,9 +8,9 @@
 #
 #   ./release.sh 0.1.0
 #
-# Needs a notarytool keychain profile once. `imark` is the profile Miguel's Mac
-# already has, shared across his apps; UNBURY_NOTARY_PROFILE names a different
-# one on a machine where it is called something else.
+# Needs a notarytool keychain profile once. `imark` is the profile this Mac
+# already has, shared across the owner's apps; set UNBURY_NOTARY_PROFILE to name
+# a different one on a machine where it is called something else.
 #   xcrun notarytool store-credentials imark \
 #     --apple-id you@example.com --team-id <your-team-id> --password <app-specific>
 # Your team id is the code in brackets on your own signing identity:
