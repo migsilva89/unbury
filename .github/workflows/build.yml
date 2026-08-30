@@ -23,12 +23,15 @@ permissions:
 jobs:
   build:
     name: Build and test
-    runs-on: macos-15
+    # macOS 26, not 15: the interface calls `scrollEdgeEffectHidden`, which only
+    # exists in the macOS 26 SDK. An older runner does not fail to *run* it — it
+    # fails to compile it, guarded availability check and all.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v5
 
       - name: Show the toolchain
-        run: swift --version
+        run: swift --version && xcodebuild -version
 
       - name: Cache the build directory
         uses: actions/cache@v4
