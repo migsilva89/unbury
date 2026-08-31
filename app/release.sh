@@ -22,6 +22,10 @@ VERSION=${1:?usage: ./release.sh <version>}
 PROFILE=${UNBURY_NOTARY_PROFILE:-imark}
 APP="build/Unbury.app"
 DMG="build/Unbury-$VERSION.dmg"
+# The same image under a second name, so GitHub's per-asset download counter
+# separates copies updating themselves from people installing for the first
+# time. Written by Support/appcast.sh, which also points the feed at it.
+UPDATE_DMG="build/Unbury-$VERSION-update.dmg"
 APPCAST="build/appcast.xml"
 STAGE="build/dmg"
 
@@ -74,9 +78,12 @@ echo "Gatekeeper says: $(spctl -a -t open --context context:primary-signature -v
 cat <<EOF
 
 to publish:
-  gh release create v$VERSION "$DMG" "$APPCAST" --title "Unbury $VERSION" --notes "…"
+  gh release create v$VERSION "$DMG" "$UPDATE_DMG" "$APPCAST" \\
+    --title "Unbury $VERSION" --notes "…"
 
-Both files, in one release. The feed names the disk image by the address that
-tag gives it, so publishing one without the other offers an update that cannot
-be downloaded.
+All three, in one release. $(basename "$UPDATE_DMG") is $(basename "$DMG") byte for
+byte under a second name: the feed points installed copies at it, so GitHub's
+per-asset counter tells updates apart from first installs. Leave it out and
+every installed updater gets a 404; link it from the site by mistake and the
+two counters go back to being one.
 EOF

@@ -71,9 +71,11 @@ image, sends it to Apple, waits for the verdict, staples the ticket into the
 image, and then writes the update feed. Notarisation is Apple looking at the
 binary and takes a few minutes.
 
-It leaves two files in `app/build/`:
+It leaves three files in `app/build/`:
 
 - `Unbury-<version>.dmg` — signed, notarised and stapled
+- `Unbury-<version>-update.dmg` — the same image, byte for byte, under a second
+  name. See "Two names for one image" below.
 - `appcast.xml` — the signed feed, listing that one version
 
 The signing order inside `build.sh` is not cosmetic. Sparkle is sealed first,
@@ -97,20 +99,43 @@ this app, drag it across, open it. Gatekeeper is only really tested elsewhere.
 
 ## Publishing
 
-Nothing reaches anybody until both files are attached to one GitHub release:
+Nothing reaches anybody until all three files are attached to one GitHub
+release:
 
 ```
 gh release create v<version> \
-  app/build/Unbury-<version>.dmg app/build/appcast.xml \
+  app/build/Unbury-<version>.dmg \
+  app/build/Unbury-<version>-update.dmg \
+  app/build/appcast.xml \
   --title "Unbury <version>" --notes "..."
 ```
 
 The app reads the feed at
 `https://github.com/migsilva89/unbury/releases/latest/download/appcast.xml`,
 and the feed names the disk image by the address that tag gives it. Publishing
-one file without the other offers people an update that cannot be downloaded.
-`release.sh` prints the whole command at the end for this reason.
+the feed without the image it names offers people an update that cannot be
+downloaded. `release.sh` prints the whole command at the end for this reason.
 
-GitHub counts every download of the disk image, whether a person clicked it or
-Sparkle fetched it on somebody's behalf. That count is the only measure of
-whether a release reached anyone.
+## Two names for one image
+
+`Unbury-<version>-update.dmg` is `Unbury-<version>.dmg` byte for byte — same
+contents, same signature, same Apple staple. It exists only so that the two can
+be counted apart.
+
+GitHub reports downloads per asset and nothing else. With a single image there
+is no way to tell somebody installing Unbury for the first time from a copy
+updating itself: both land on the same counter. With two, the feed points
+installed copies at the `-update` name and everything else points at the plain
+one, so the plain counter is installs and the `-update` counter is updates. It
+costs one extra copy of the image per release, and needs no analytics, no
+server, and nothing that phones home.
+
+Two rules follow, and both are easy to get wrong:
+
+- **Never publish without the `-update` copy.** The feed names it, so leaving it
+  out 404s every installed updater. `Support/appcast.sh` refuses to write a feed
+  that does not name it, which catches the other half of the mistake.
+- **Never link the `-update` copy from anywhere a person can see** — not the
+  site, not a Homebrew cask, not the README. They must name the plain file
+  exactly, not "the first `.dmg` on the release". One wrong link and the two
+  counters quietly become one again.
