@@ -116,6 +116,25 @@ and the feed names the disk image by the address that tag gives it. Publishing
 the feed without the image it names offers people an update that cannot be
 downloaded. `release.sh` prints the whole command at the end for this reason.
 
+## Homebrew
+
+`brew install --cask migsilva89/unbury/unbury` reads one file in another
+repository — `Casks/unbury.rb` in `migsilva89/homebrew-unbury` — which names a
+version and the checksum of its disk image. **Publishing a release does not
+touch it.** Until it is updated, Homebrew goes on installing the previous
+version while the site and the in-app updater offer the new one, which is the
+one way somebody downloads an old Unbury while being told it is the new one.
+
+```bash
+app/Support/tap.sh            # after the release is published
+app/Support/tap.sh --check    # what Homebrew is handing out right now
+```
+
+It takes the checksum from the asset as GitHub serves it, not from the local
+`build/` copy, because those are the bytes a stranger's `brew` will compare. And
+it always names the plain image: a cask pointing at the `-update` copy would put
+every `brew install` into the updates column.
+
 ## Two names for one image
 
 `Unbury-<version>-update.dmg` is `Unbury-<version>.dmg` byte for byte — same
