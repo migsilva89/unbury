@@ -283,6 +283,15 @@ build, so the person is asked for their key again every time.
 Signing alone is not enough — without notarisation macOS says the app "is damaged",
 which reads as a broken download rather than a missing stamp.
 
+**Every release carries the disk image twice**, under the plain name and under an
+`-update` name that only the Sparkle feed points at. Same bytes, same signature.
+GitHub counts downloads per asset and nothing else, so this is the only way to tell
+a first install from a copy updating itself, and it needs no analytics and nothing
+that phones home. Never publish without the `-update` copy — the feed names it, so
+leaving it out 404s every installed updater — and never link that copy from the
+site, a cask or the README, which would put both back on one counter.
+`docs/RELEASING.md` has the full account.
+
 ## Working on this
 
 - **Never commit without being asked.** Signing, releasing and publishing are the

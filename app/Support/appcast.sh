@@ -6,8 +6,15 @@
 #   Support/appcast.sh build/Unbury-0.1.0.dmg
 #
 # The feed is what an installed copy reads to learn a newer version exists. It
-# is useless on this machine: both it and the disk image have to be attached to
-# the GitHub release for this version before anybody is offered the update.
+# is useless on this machine: it and both disk images have to be attached to the
+# GitHub release for this version before anybody is offered the update.
+#
+# It points at a SECOND copy of the same image, published under the `-update`
+# name. Same bytes, same signature, different GitHub asset — which is the only
+# way to tell an update apart from a first install, because GitHub counts
+# downloads per asset and nothing else. The plain name is what the site and any
+# future Homebrew cask link; the `-update` name is only ever fetched by an app
+# updating itself.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -27,6 +34,7 @@ OUTPUT="$ROOT/build/appcast.xml"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' \
 	"$ROOT/build/Unbury.app/Contents/Info.plist")"
 DOWNLOAD_PREFIX="https://github.com/migsilva89/unbury/releases/download/v$VERSION/"
+UPDATE_DMG="$ROOT/build/Unbury-$VERSION-update.dmg"
 
 [ -n "$DMG" ] || { echo "usage: Support/appcast.sh <path to .dmg>" >&2; exit 1; }
 [ -f "$DMG" ] || { echo "error: no disk image at $DMG" >&2; exit 1; }
@@ -55,12 +63,13 @@ ACTUAL="$("$KEYS" --account unbury -p)"
 # holds exactly this release and nothing else left over from an earlier build.
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
-ditto "$DMG" "$STAGE/$(basename "$DMG")"
+# Under the update name, so that is the address the generated feed carries.
+ditto "$DMG" "$STAGE/$(basename "$UPDATE_DMG")"
 
 "$GENERATE" \
 	--account unbury \
 	--download-url-prefix "$DOWNLOAD_PREFIX" \
-	--link "https://github.com/migsilva89/unbury" \
+	--link "https://unbury.migsilva.dev" \
 	--maximum-versions 1 \
 	--maximum-deltas 0 \
 	-o "$STAGE/appcast.xml" \
@@ -75,7 +84,14 @@ grep -q 'sparkle:edSignature=' "$STAGE/appcast.xml" \
 grep -q '<!-- sparkle-signatures:' "$STAGE/appcast.xml" \
 	|| { echo "error: appcast.xml itself is not signed — the app needs" >&2
 	     echo "       SURequireSignedFeed in its Info.plist" >&2; exit 1; }
+# Publishing a feed that names the plain image would put every self-update back
+# into the same counter as the first installs, silently and for that whole
+# release. Cheaper to refuse here than to notice a month later.
+grep -q "$(basename "$UPDATE_DMG")" "$STAGE/appcast.xml" \
+	|| { echo "error: the feed does not point at the update copy" >&2; exit 1; }
 
 cp "$STAGE/appcast.xml" "$OUTPUT"
+cp "$DMG" "$UPDATE_DMG"
 
 echo "update feed → $OUTPUT"
+echo "update image → $UPDATE_DMG"
