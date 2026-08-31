@@ -55,11 +55,19 @@
 the update feed says so, so an Intel Mac is never offered it. Building from source on an
 Intel Mac has not been tried.
 
-1. Download the DMG from [**Releases**](../../releases/latest), or from
-   [unbury.migsilva.dev](https://unbury.migsilva.dev).
-2. Open it and drag **Unbury** to **Applications**.
-3. Open it, and in **Settings** paste your API key.
-4. Press **Import from browser** and pick a profile.
+```sh
+brew install --cask migsilva89/unbury/unbury
+```
+
+That also links `unburyctl`, the command-line half, onto your path. Or download the
+DMG from [**Releases**](../../releases/latest) or
+[unbury.migsilva.dev](https://unbury.migsilva.dev) and drag **Unbury** to
+**Applications**.
+
+Either way, two steps to a working library:
+
+1. Open it, and in **Settings** paste your API key.
+2. Press **Import from browser** and pick a profile.
 
 The import shows what it will do before it does it — which profiles it found, which
 links are new, and roughly what they will cost. Nothing is spent until you press the
