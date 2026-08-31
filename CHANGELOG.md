@@ -4,6 +4,24 @@ Notable changes, newest first. Versions follow [semantic versioning](https://sem
 with the caveat that 0.x means the settings, the store format and the command line may still
 change between releases.
 
+## 0.1.1 — 2026-08-31
+
+A maintenance release. Nothing in the app itself changed — if you are already on
+0.1.0 there is nothing here to gain, and nothing lost by skipping it.
+
+- The README now says what the app actually runs on: macOS 14 or later **on Apple
+  Silicon**. The published build is arm64 only and the update feed always said so,
+  so an Intel Mac was never offered it — but nothing told anyone before they
+  downloaded.
+- When Unbury fetches one of your saved pages to describe it, it now identifies
+  itself as `Unbury/1.0` with a link to the site. It had been saying
+  `BookmarksVault/1.0`, a name the app stopped using in August, which is what
+  every site owner saw in their logs.
+- Each release now carries the disk image twice, under the plain name and an
+  `-update` name that only the updater fetches. They are the same file. It exists
+  so that first installs and self-updates can be counted apart, which GitHub
+  cannot do for a single asset.
+
 ## 0.1.0 — 2026-08-30
 
 First release.
