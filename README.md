@@ -43,10 +43,10 @@
 - **Ask Unbury** — a conversation that runs its own searches and shows you every one it ran
 - **Updates itself** — signed, notarised, and it tells you when there is a new version
 
-## Screenshot
+## Demo
 
 <p align="center">
-  <img src=".github/assets/unbury-search.png" width="920" alt="Unbury answering 'landing gear for the pavo 20 drone' with three links, scored 0.83, 0.77 and 0.75, and withholding 57 weaker ones">
+  <img src=".github/assets/unbury-demo.gif" width="920" alt="Unbury searching by meaning: a question in plain language returns the matching saved links, scored, with weaker ones withheld">
 </p>
 
 ## Installation
