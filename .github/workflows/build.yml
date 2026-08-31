@@ -34,7 +34,7 @@ jobs:
         run: swift --version && xcodebuild -version
 
       - name: Cache the build directory
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: app/.build
           key: swiftpm-${{ runner.os }}-${{ hashFiles('app/Package.resolved') }}
