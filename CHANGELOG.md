@@ -4,6 +4,14 @@ Notable changes, newest first. Versions follow [semantic versioning](https://sem
 with the caveat that 0.x means the settings, the store format and the command line may still
 change between releases.
 
+## 0.1.2 — 2026-09-19
+
+- A small cup at the end of the top bar, and **Help › Buy Me a Coffee…**. Unbury
+  is free and stays free; if it saves you time, that is where to buy me a coffee.
+  Nothing else in the app changed.
+- The README shows a demo GIF and says how to install with Homebrew; the site is
+  told when a release is published.
+
 ## 0.1.1 — 2026-08-31
 
 A maintenance release. Nothing in the app itself changed — if you are already on
