@@ -22,6 +22,9 @@
   <img src="https://img.shields.io/badge/Apple%20Silicon-only-black?style=flat-square" alt="Apple Silicon only">
   <img src="https://img.shields.io/badge/Swift-6-orange?style=flat-square" alt="Swift 6">
   <img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square" alt="MIT license">
+  <a href="https://buymeacoffee.com/migsilva?utm_source=github-unbury">
+    <img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-%E2%98%95-FFDD00?style=flat-square" alt="Buy me a coffee">
+  </a>
 </p>
 
 > [!IMPORTANT]
