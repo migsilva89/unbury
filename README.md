@@ -156,6 +156,10 @@ public issue. See [SECURITY.md](SECURITY.md).
 Why it is built the way it is — including the decisions that look like bugs and are not
 — is in [CLAUDE.md](CLAUDE.md). Read it before changing anything.
 
+## Support the project
+
+Unbury is free and stays free. If it saves you time, you can [buy me a coffee](https://buymeacoffee.com/migsilva?utm_source=github-unbury) — it keeps the next release coming.
+
 ## License
 
 [MIT](LICENSE). The third-party software Unbury links and ships, and its licences,
