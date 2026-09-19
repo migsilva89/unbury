@@ -37,6 +37,9 @@ struct UnburyApp: App {
                 Button("Settings…") { model.showSettings = true }.clickable()
                     .keyboardShortcut(",", modifiers: .command)
             }
+            CommandGroup(after: .help) {
+                Button("Buy Me a Coffee…") { Coffee.open() }.clickable()
+            }
         }
     }
 }
@@ -219,6 +222,19 @@ struct TopBar: View {
             }
             .buttonStyle(.plain).clickable()
             .help("Settings")
+
+            // The tip jar, last in the bar and drawn like the settings button so it
+            // is one of the bar's controls rather than an advert. A cup and nothing
+            // else: the tooltip carries the sentence.
+            Button { Coffee.open() } label: {
+                Image(systemName: "cup.and.saucer")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Theme.ink2)
+                    .padding(.horizontal, 7).padding(.vertical, 5)
+                    .background(RoundedRectangle(cornerRadius: 5).fill(Theme.line2))
+            }
+            .buttonStyle(.plain).clickable()
+            .help("Unbury is free, and stays free. If it saves you time, buy me a coffee")
         }
         .padding(.horizontal, 14)
         .frame(height: 42)
@@ -229,4 +245,11 @@ struct TopBar: View {
         guard model.count > 0 else { return "empty — import to begin" }
         return "\(model.count) links"
     }
+}
+
+/// The tip jar. The app is free and stays free; this is the one link that says so and asks.
+/// `utm_source` tells the Buy Me a Coffee dashboard which app the visit came from.
+enum Coffee {
+    static let url = URL(string: "https://buymeacoffee.com/migsilva?utm_source=unbury-app")!
+    static func open() { NSWorkspace.shared.open(url) }
 }
